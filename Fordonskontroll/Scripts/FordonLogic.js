@@ -12,6 +12,12 @@ var SearchTemplate = {
     rows: [
         {
             cols: [
+                {},
+                { view: "button", value: "Save", id: "SaveControll", width: 100, disabled: true, click: "SaveControll()" }
+            ]
+        },
+        {
+            cols: [
                 {
                     rows: [
                         {
@@ -74,12 +80,6 @@ var SearchTemplate = {
                         }
                     }
                 }
-            ]
-        },
-        {
-            cols: [
-                {},
-                { view: "button", value: "Save", id: "SaveControll", width: 100, disabled: true, click: "SaveControll()" }
             ]
         }
     ]
@@ -408,6 +408,7 @@ function GetFordonData() {
     //Show search batch and disable save button
     $$("MainScreen").showBatch("search");
     $$("SaveControll").disable();
+    $$("loadtextwin").show();
 
     //Do not allow user to enter more than 10 characters
     if ($$("SearchBox").getValue().length >= 1 && $$("SearchBox").getValue().length <= 10) {
@@ -421,6 +422,7 @@ function GetFordonData() {
         GetControl("New"); //Controll details. Latest by default.
     } else {
         //Inform user to enter TaxiNr
+        $$("loadextwin").hide();
         webix.message({ type: "error", text: "Please enter correct TaxiNr!" })
     }
 }
@@ -442,6 +444,7 @@ function GetFordonHeaderData() {
         success: function (data) {
             PopulateVehicleData(data[0]); //Populate table with returned data
             CallPopulateConstollsData(data[0].regNr, data[0].taxiNr, data[0].medlem);
+            $$("loadtextwin").hide();
 
         }
     })
@@ -477,7 +480,7 @@ function GetControl(ControlId) {
      * Retrieves JSON object and populates KravData table.
      */
     jQuery.ajax({
-        url: 'api/search/control',
+        url: 'api/search/getcontrol',
         type: 'POST',
         contentType: 'application/json; charset=utf-8',
         //Get data from webix
@@ -490,6 +493,7 @@ function GetControl(ControlId) {
         success: function (data) {
             $$("KravData").parse(data);
             $$("SaveControll").enable();
+            
 
         }
     })
@@ -514,7 +518,7 @@ function SaveControll() {
     //Create string arrays
     ArnApp.each(DataObject, function (index, value) {
         IDString = IDString + value.id + ";"
-        StatusString = StatusString + value.Status + ";"
+        StatusString = StatusString + value.status + ";"
     })
 
     //Populate rest of the data
@@ -525,28 +529,32 @@ function SaveControll() {
     StatusString = StatusString.substring(0, StatusString.length - 1);
 
     //Send data
-    ArnApp.post({
-        url: "saveControl.asp",
-        type: "json",
-        uspjeh: function (data) {
-            try {
-                GetFordonHeaderData(); //Recalculate header
-                $$("savetextwin").hide();
-            } catch (e) {
-                webix.message({ type: "error", text: "Data not saved!!!" })
+    jQuery.ajax({
+        url: 'api/search/savecontrol',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        //Get data from webix
+        data: JSON.stringify({
+            "id": IDString,
+            "status": StatusString,
+            "regNr": FHD.RegNr,
+            "taxiNr": FHD.TaxiNr,
+            "medlem": FHD.Medlem
+        }),
+        dataType: 'json',
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            if (data == 0) {
+                //nije snimio
+                webix.message({type:"error",message:"Controll not saved!!!"})
+            } else {
+                //jeste snimio. TBD obavjesti korisnika
+                webix.message("Controll saved!!!")
             }
-        },
-        neuspjeh: function () {
-            console.log("Call SaveControll fails")
-            webix.message({ type: "error", text: "Call failed! Data not saved!!!" })
-        },
-        parametri: [{
-            "IDString": IDString,
-            "StatusString": StatusString,
-            "RegNr": FHD.RegNr,
-            "TaxiNr": FHD.TaxiNr,
-            "Medlem": FHD.Medlem
-        }]
+            GetFordonHeaderData(); //Recalculate header
+            $$("savetextwin").hide();
+
+        }
     })
 }
 

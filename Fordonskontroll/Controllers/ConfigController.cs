@@ -331,7 +331,6 @@ namespace Source.Controllers
             public bool Check { get; set; }
 
         }
-
         /*
          * Methods
          */

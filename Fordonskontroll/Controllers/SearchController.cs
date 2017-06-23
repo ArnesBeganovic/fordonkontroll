@@ -86,7 +86,7 @@ namespace Source.Controllers
             return pcList;
         }
 
-        [Route("control")]
+        [Route("getcontrol")]
         [System.Web.Http.HttpPost]
         public List<CurrentControllRow> Post([FromBody] ControlId cid)
         {
@@ -115,6 +115,75 @@ namespace Source.Controllers
                 }
             }
             return fd;
+        }
+
+        [Route("savecontrol")]
+        [System.Web.Http.HttpPost]
+        public int SaveControll([FromBody] KravSave ksr)
+        {
+            bool IsOK = true;
+            //krs.id should be same array length as ksr.status and it all should be numbers
+            if(ksr.id.Count(e => e ==';')!=ksr.status.Count(e=> e == ';'))
+            {
+                IsOK = false;
+            }
+
+            //Check if id contains only numbers as it should
+            if (!IsDigitsOnly(ksr.id.Replace(';','0')))
+            {
+                IsOK = false;
+            }
+
+            //check if status contains only numbers as it should
+            if (!IsDigitsOnly(ksr.status.Replace(';', '0')))
+            {
+                IsOK = false;
+            }
+
+            if (IsOK)
+            {
+                //Save Controll in the Database
+                //Connect and retrieve data
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
+                {
+                    SqlCommand cmd = new SqlCommand("saveControll", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter param1 = new SqlParameter("@IDString", ksr.id);
+                    cmd.Parameters.Add(param1);
+
+                    SqlParameter param2 = new SqlParameter("@StatusString", ksr.status);
+                    cmd.Parameters.Add(param2);
+
+                    SqlParameter param3 = new SqlParameter("@RegNr", ksr.regNr);
+                    cmd.Parameters.Add(param3);
+
+                    SqlParameter param4 = new SqlParameter("@TaxiNr", ksr.taxiNr);
+                    cmd.Parameters.Add(param4);
+
+                    SqlParameter param5 = new SqlParameter("@Medlem", ksr.medlem);
+                    cmd.Parameters.Add(param5);
+
+                    con.Open();
+                    return cmd.ExecuteNonQuery();
+
+                }
+            }
+            return 0;
+        }
+
+        /*
+         * Methods
+         */
+        bool IsDigitsOnly(string str)
+        {
+            foreach (char c in str)
+            {
+                if (c < '0' || c > '9')
+                    return false;
+            }
+
+            return true;
         }
     }
 
@@ -155,6 +224,16 @@ namespace Source.Controllers
     {
         public string id { get; set; }
     }
+    public class KravSave
+    {
+        public string id { get; set; } //ID string array
+        public string status { get; set; } //Status string array
+        public string regNr { get; set; }
+        public string taxiNr { get; set; }
+        public string medlem { get; set; }
+    }
 
 
+
+    
 }
