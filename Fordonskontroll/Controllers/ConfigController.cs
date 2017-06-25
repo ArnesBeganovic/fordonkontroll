@@ -42,26 +42,14 @@ namespace Source.Controllers
                     kt.id = Convert.ToInt64(rdr["KravID"]);
                     kt.Krav = rdr["Krav"].ToString();
                     kt.Status = Convert.ToInt32(rdr["Status"]);
-                    kt.Efterkontroll = rdr["Efterkontroll"].ToString();
-                    kt.ExkluderadeBilar = rdr["ExkluderadeBilar"].ToString();
+                    kt.Efterkontroll = Convert.ToInt32(rdr["Efterkontroll"]);
+                    kt.ExkluderadeBilar = Convert.ToInt32(rdr["ExkluderadeBilar"]);
 
                     //Translate reserved words in column "Krav"
                     kt.Krav = kt.Krav.Replace("@s@", "select");
                     kt.Krav = kt.Krav.Replace("@d@", "drop");
                     kt.Krav = kt.Krav.Replace("@i@", "insert");
                     kt.Krav = kt.Krav.Replace("@n@", "'");
-
-                    //Translate reserved words in column "Efterkontroll"
-                    kt.Efterkontroll = kt.Efterkontroll.Replace("@s@", "select");
-                    kt.Efterkontroll = kt.Efterkontroll.Replace("@d@", "drop");
-                    kt.Efterkontroll = kt.Efterkontroll.Replace("@i@", "insert");
-                    kt.Efterkontroll = kt.Efterkontroll.Replace("@n@", "'");
-
-                    //Translate reserved words in column "ExkluderadeBilar"
-                    kt.ExkluderadeBilar = kt.ExkluderadeBilar.Replace("@s@", "select");
-                    kt.ExkluderadeBilar = kt.ExkluderadeBilar.Replace("@d@", "drop");
-                    kt.ExkluderadeBilar = kt.ExkluderadeBilar.Replace("@i@", "insert");
-                    kt.ExkluderadeBilar = kt.ExkluderadeBilar.Replace("@n@", "'");
 
                     //Add row to the list
                     krList.Add(kt);
@@ -319,8 +307,8 @@ namespace Source.Controllers
             public long id { get; set; }
             public string Krav { get; set; }
             public int Status { get; set; }
-            public string Efterkontroll { get; set; }
-            public string ExkluderadeBilar { get; set; }
+            public int Efterkontroll { get; set; }
+            public int ExkluderadeBilar { get; set; }
             public bool Check { get; set; }
         }
         public class UserRow
@@ -351,30 +339,6 @@ namespace Source.Controllers
             kt.Krav = kt.Krav.Replace("drop", "@d@");
             kt.Krav = kt.Krav.Replace("insert", "@i@");
             kt.Krav = kt.Krav.Replace("'", "@n@");
-
-            //Column EFTERKONTROLL
-            kt.Efterkontroll = kt.Efterkontroll.Replace("select", "@s@");
-            kt.Efterkontroll = kt.Efterkontroll.Replace("drop", "@d@");
-            kt.Efterkontroll = kt.Efterkontroll.Replace("insert", "@i@");
-            kt.Efterkontroll = kt.Efterkontroll.Replace("'", "@n@");
-
-            //Column EXKULDERADEBILAR
-            kt.ExkluderadeBilar = kt.ExkluderadeBilar.Replace("select", "@s@");
-            kt.ExkluderadeBilar = kt.ExkluderadeBilar.Replace("drop", "@d@");
-            kt.ExkluderadeBilar = kt.ExkluderadeBilar.Replace("insert", "@i@");
-            kt.ExkluderadeBilar = kt.ExkluderadeBilar.Replace("'", "@n@");
-
-
-            //Check if all values are populated correctly (they should come from dropdown list)
-            if (kt.Efterkontroll != "Inom kort" && kt.Efterkontroll != "Ingen" && kt.Efterkontroll != "Senare")
-            {
-                kt.Check = false;
-            }
-
-            if (kt.ExkluderadeBilar == "" || kt.ExkluderadeBilar.Length > 50)
-            {
-                kt.Check = false;
-            }
 
             if (kt.Status != 1 && kt.Status != 0)
             {
@@ -420,6 +384,18 @@ namespace Source.Controllers
 
             return ut;
         }
+
+        bool IsDigitsOnly(string str)
+        {
+            foreach (char c in str)
+            {
+                if (c < '0' || c > '9')
+                    return false;
+            }
+
+            return true;
+        }
+
         private long GetMaximumKravID()
         {
             /*
@@ -429,7 +405,7 @@ namespace Source.Controllers
             string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
             using (SqlConnection con = new SqlConnection(CS))
             {
-                string selectQuarry = "select max(KravID) as KravID from[Godisnji].[dbo].[KravTabell]";
+                string selectQuarry = "select max(KravID) as KravID from KravTabell";
                 SqlCommand cmd = new SqlCommand(selectQuarry, con);
 
                 con.Open();

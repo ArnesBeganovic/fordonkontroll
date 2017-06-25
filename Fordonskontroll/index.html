@@ -73,18 +73,19 @@ webix.ui({
 					{ "id":1, "value":"Enabled" },
 					{ "id":0, "value":"Disabled" }
 				]},
-			{view:"select",id:"KravC", label:"Efterkontroll",value:"Inom kort",labelWidth:150,
+			{view:"select",id:"KravC", label:"Efterkontroll",value:1,labelWidth:150,
 				options:[
-					{ "id":"Inom kort", "value":"Inom kort" },
-					{ "id":"Ingen", "value":"Ingen" },
-					{ "id":"Senare", "value":"Senare" }
+                    { "value": "Ingen", "id":1 },
+                    { "value": "Snarast", "id": 2 },
+                    { "value": "Inom kort", "id": 3 }
 				]},
-			{view:"select",id:"KravD", label:"Exkluderade Bilar",value:"Inga",labelWidth:150,
+			{view:"select",id:"KravD", label:"Exkluderade Bilar",value:1,labelWidth:150,
 				options:[
-					{ "id":"Inga", "value":"Inga" },
-					{ "id":"Bilar som saknar centralen transponder", "value":"Bilar som saknar centralen transponder" },
-					{ "id":"Storbilar", "value":"Storbilar" },
-					{ "id":"Executive", "value":"Executive" }
+					{ "value":"Inga", "id":1 },
+                    { "value": "Storbilar", "id":2 },
+                    { "value": "Executive", "id":3 },
+                    { "value": "Bilar utan centralen transponder", "id": 4 },
+                    { "value": "Bilar utan OTT-kategori", "id": 5 }
 				]},
 			{ margin:5, cols:[
 				{ view:"button", id:"saveKravbtn", value:"Save" , click:function(){

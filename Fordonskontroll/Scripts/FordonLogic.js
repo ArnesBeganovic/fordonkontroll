@@ -117,8 +117,21 @@ var KonfKrav = {
                     }
                 }
             },
-            { id: "efterkontroll", width: 200, header: "Efterkontroll" },
-            { id: "exkluderadeBilar", fillspace: true, header: "Exkluderade Bilar" }
+            {
+                id: "efterkontroll", width: 200, header: "Efterkontroll", template: function (ulaz) {
+                    if (ulaz.efterkontroll == 1) { return "Ingen" }
+                    else if (ulaz.efterkontroll == 2) { return "Snarast" }
+                    else if (ulaz.efterkontroll == 3) { return "Inom kort" }
+                }
+            },
+            {
+                id: "exkluderadeBilar", fillspace: true, header: "Exkluderade Bilar", template: function (ulaz) {
+                    if (ulaz.exkluderadeBilar == 1) { return "Inga" }
+                    else if (ulaz.exkluderadeBilar == 2) { return "Storbilar" }
+                    else if (ulaz.exkluderadeBilar == 3) { return "Executive" }
+                    else if (ulaz.exkluderadeBilar == 4) { return "Bilar utan centralen transponder" }
+                    else if (ulaz.exkluderadeBilar == 5) { return "Bilar utan OTT-kategori" }
+                } }
         ],
         select: "row",
         data: [],
@@ -376,6 +389,7 @@ function GetKrav() {
         success: function (data) {
             $$("KravTableListConfig").clearAll();
             $$("KravTableListConfig").parse(data);
+            $$("KravTableListConfig").refresh();
             $$("loadtextwin").hide();
         }
     })
@@ -690,8 +704,8 @@ function ShowKravWindow(id) {
     $$('NewKravForm').config.prenosniID = 0;
     $$("KravA").setValue("");
     $$("KravB").setValue(0);
-    $$("KravC").setValue("Inom kort");
-    $$("KravD").setValue("Inga");
+    $$("KravC").setValue(1);
+    $$("KravD").setValue(1);
 
     //Check if existing selected and set those values if is. It will populate form
     ArnApp.each($$("KravTableListConfig").data.pull, function (index, value) {

@@ -231,9 +231,5 @@ namespace Source.Controllers
         public string regNr { get; set; }
         public string taxiNr { get; set; }
         public string medlem { get; set; }
-    }
-
-
-
-    
+    }    
 }
