@@ -17,41 +17,6 @@ namespace Source.Controllers
     [RoutePrefix("api/search")]
     public class SearchController : ApiController
     {
-        [Route("fordonheader")]
-        [System.Web.Http.HttpPost]
-        public List<FordonHeader> Post([FromBody] TaxiNr taxiNr)
-        {
-            /*
-             * Lists fordon header data based on selected taxi number 
-             */
-
-            List<FordonHeader> fh = new List<FordonHeader>();
-
-            //Connect and run stored procedure
-            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
-            using (SqlConnection con = new SqlConnection(CS))
-            {
-                SqlCommand cmd = new SqlCommand("getFordonData", con);
-                cmd.CommandType = CommandType.StoredProcedure;
-                SqlParameter param = new SqlParameter("@TaxiNr", taxiNr.id);
-                cmd.Parameters.Add(param);
-                con.Open();
-                SqlDataReader rdr = cmd.ExecuteReader();
-                while (rdr.Read())
-                {
-                    FordonHeader fhObj = new FordonHeader();
-                    fhObj.Fabrikat = rdr["Fabrikat"].ToString();
-                    fhObj.RegNr = rdr["RegNr"].ToString();
-                    fhObj.Arsmodell = rdr["Arsmodell"].ToString();
-                    fhObj.TaxiNr = rdr["TaxiNr"].ToString();
-                    fhObj.Medlem = rdr["Medlem"].ToString();
-
-                    fh.Add(fhObj);
-                }
-            }
-            return fh;
-        }
-
         [Route("previouscontrolls")]
         [System.Web.Http.HttpPost]
         public List<PreviousControll> Post([FromBody] FordonIdentification fi)
@@ -88,7 +53,7 @@ namespace Source.Controllers
 
         [Route("getcontrol")]
         [System.Web.Http.HttpPost]
-        public List<CurrentControllRow> Post([FromBody] ControlId cid)
+        public List<CurrentControllRow> Post([FromBody] TaxiNr tNr)
         {
             /*
              * Lists one controll in main table. It can be a list of all active requirements (krav list) or it can be historic requirement status.
@@ -101,7 +66,9 @@ namespace Source.Controllers
             {
                 SqlCommand cmd = new SqlCommand("getControll", con);
                 cmd.CommandType = CommandType.StoredProcedure;
-                SqlParameter param = new SqlParameter("@ControlId", cid.id);
+                SqlParameter taxiNr = new SqlParameter("@taxiNr", tNr.idt);
+                cmd.Parameters.Add(taxiNr);
+                SqlParameter param = new SqlParameter("@ControlId", tNr.idc);
                 cmd.Parameters.Add(param);
                 con.Open();
                 SqlDataReader rdr = cmd.ExecuteReader();
@@ -111,6 +78,11 @@ namespace Source.Controllers
                     fdOne.id = Convert.ToInt64(rdr["KravID"]);
                     fdOne.Krav = rdr["Krav"].ToString();
                     fdOne.Status = Convert.ToInt32(rdr["Status"]);
+                    fdOne.Fabrikat = rdr["fabrikat"].ToString();
+                    fdOne.RegNr = rdr["regnr"].ToString();
+                    fdOne.Arsmodell = rdr["arsmodel"].ToString();
+                    fdOne.TaxiNr = rdr["taxinr"].ToString();
+                    fdOne.Medlem = Convert.ToInt32(rdr["medlemnr"]);
                     fd.Add(fdOne);
                 }
             }
@@ -123,13 +95,13 @@ namespace Source.Controllers
         {
             bool IsOK = true;
             //krs.id should be same array length as ksr.status and it all should be numbers
-            if(ksr.id.Count(e => e ==';')!=ksr.status.Count(e=> e == ';'))
+            if (ksr.id.Count(e => e == ';') != ksr.status.Count(e => e == ';'))
             {
                 IsOK = false;
             }
 
             //Check if id contains only numbers as it should
-            if (!IsDigitsOnly(ksr.id.Replace(';','0')))
+            if (!IsDigitsOnly(ksr.id.Replace(';', '0')))
             {
                 IsOK = false;
             }
@@ -165,8 +137,8 @@ namespace Source.Controllers
                     cmd.Parameters.Add(param5);
 
                     con.Open();
-                    return cmd.ExecuteNonQuery();
-
+                    cmd.ExecuteNonQuery();
+                    return GetMaxSession();
                 }
             }
             return 0;
@@ -185,7 +157,33 @@ namespace Source.Controllers
 
             return true;
         }
-    }
+
+        private int GetMaxSession()
+        {
+            /*
+             * Returns latest ID from Krav table
+             */
+            int SessionNrIdToReturn = 0;
+            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(CS))
+            {
+                string selectQuarry = "select max(SessionNr) as SessionNr from KontrollTabell";
+                SqlCommand cmd = new SqlCommand(selectQuarry, con);
+
+                con.Open();
+                SqlDataReader rdr = cmd.ExecuteReader();
+                while (rdr.Read())
+                {
+
+                    SessionNrIdToReturn = Convert.ToInt32(rdr["SessionNr"]);
+
+                }
+            }
+
+            return SessionNrIdToReturn;
+        }
+
+    }  
 
     /*
      * Classes needed for listing and data processing
@@ -193,15 +191,8 @@ namespace Source.Controllers
 
     public class TaxiNr
     {
-        public string id { get; set; }
-    }
-    public class FordonHeader
-    {
-        public string Fabrikat { get; set; }
-        public string RegNr { get; set; }
-        public string Arsmodell { get; set; }
-        public string TaxiNr { get; set; }
-        public string Medlem { get; set; }
+        public string idt { get; set; }
+        public string idc { get; set; }
     }
     public class FordonIdentification
     {
@@ -219,10 +210,11 @@ namespace Source.Controllers
         public long id { get; set; }
         public string Krav { get; set; }
         public int Status { get; set; }
-    }
-    public class ControlId
-    {
-        public string id { get; set; }
+        public string Fabrikat { get; set; }
+        public string RegNr { get; set; }
+        public string Arsmodell { get; set; }
+        public string TaxiNr { get; set; }
+        public int Medlem { get; set; }
     }
     public class KravSave
     {

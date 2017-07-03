@@ -172,24 +172,44 @@ webix.ui({
 		id:"NewFordonControllForm",
 		prenosniID:0,
 		width:500,
-		elements: [
-			{view:"datepicker", id:"KontrollFran", align: "right",label: 'Från:',labelWidth:150},
-			{view:"datepicker",id:"KontrollTill" ,align: "right",label: 'Till:',labelWidth:150},
+        elements: [
+            {
+                view: "select", id: "KontrolGrupp", label: "Typ", value: 1, labelWidth: 150,
+                options: [
+                    { "id": "1", "value": "Planerad fordonskontroll" },
+                    { "id": "2", "value": "Flygande fordonskontroll" }
+                ]
+            },
+            {
+                view: "datepicker", id: "KontrollFran", align: "right", label: 'Från:', labelWidth: 150, format: "%Y-%m-%d", on: {
+                    "onChange": function (newv) {
+                        $$("KontrollTill").getPopup().getBody().define("minDate", newv);
+                        $$("KontrollTill").refresh();
+                    }
+                }
+            },
+            {
+                view: "datepicker", id: "KontrollTill", align: "right", label: 'Till:', labelWidth: 150, format: "%Y-%m-%d", on: {
+                    "onChange": function (newv) {
+                        $$("KontrollFran").getPopup().getBody().define("maxDate", newv);
+                        $$("KontrollFran").refresh();
+                    }
+                }
+            },
 			{ margin:5, cols:[
-				{ view:"button", id:"saveFordonControllbtn", value:"Save" , click:function(){
-					var form = this.getParentView().getParentView();
-					if (form.validate())
-						SaveFordonControll();
-					else
-						webix.message({ type:"error", text:"Kontroll ej sparad!" });
+                {
+                    view: "button", id: "saveFordonControllbtn", value: "Save", click: function () {
+                        if ($$("KontrollFran").getValue() && $$("KontrollTill").getValue()) {
+                            SaveFordonControll();
+                        }
+                        else {
+                            webix.message({ type: "error", text: "Please enter From To Dates!" });
+                        }
 					}
 				},
 				{ view:"button", value:"Cancel",click:"$$('newFordonControll').hide();" }
 			]}
-		],
-		rules:{
-
-			}
+		]
 	}
  }).hide();
 

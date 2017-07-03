@@ -294,9 +294,112 @@ namespace Source.Controllers
 
 
         //FORDONSKONTROLL ROUTES
+        [Route("getfc")]
+        [System.Web.Http.HttpGet]
+        public List<FCRow> GUFC()
+        {
+            /*
+             * Returns list of all fordon controlls from Kontrolldatum table 
+             */
 
+            List<FCRow> fcList = new List<FCRow>();
+            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
 
+            using (SqlConnection con = new SqlConnection(CS))
+            {
+                SqlCommand cmd = new SqlCommand("select * from Kontrolldatum", con);
+                con.Open();
+                SqlDataReader rdr = cmd.ExecuteReader();
+                while (rdr.Read())
+                {
+                    FCRow fc = new FCRow();
+                    fc.ID = Convert.ToInt32(rdr["id"]);
+                    fc.Typ = rdr["Kontrolltyp"].ToString();
+                    fc.From = Convert.ToDateTime(rdr["FromDate"]);
+                    fc.To = Convert.ToDateTime(rdr["ToDate"]);
+                    fcList.Add(fc);
+                }
+            }
+            return fcList;
+        }
 
+        [Route("savefc")]
+        [System.Web.Http.HttpPost]
+        public long POST([FromBody] FCRow FCB)
+        {
+            /*
+             * Inserts new fordon controll based on posted data 
+             */
+
+            //Check if entered data are OK
+            FCRow FCT = ProtectDatabaseFC(FCB);
+
+            //If everything is OK proceed
+            if (FCT.Check)
+            {
+                //Insert FC in table
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
+                {
+                    string insertQuarry = "INSERT into Kontrolldatum (Kontrolltyp,FromDate,ToDate) select @Kontrolltyp, @FromDate, @ToDate";
+                    SqlCommand cmd = new SqlCommand(insertQuarry, con);
+                    SqlParameter paramTyp = new SqlParameter("@Kontrolltyp", FCT.Typ);
+                    cmd.Parameters.Add(paramTyp);
+                    SqlParameter paramFrom = new SqlParameter("@FromDate", FCT.From);
+                    cmd.Parameters.Add(paramFrom);
+                    SqlParameter paramTo = new SqlParameter("@ToDate", FCT.To);
+                    cmd.Parameters.Add(paramTo);
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+
+                    return GetMaximumKFCID();
+                }
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        [Route("savefc")]
+        [System.Web.Http.HttpPut]
+        public long PUT([FromBody] FCRow FCB)
+        {
+            /*
+             * Inserts new fordon controll based on posted data 
+             */
+
+            //Check if entered data are OK
+            FCRow FCT = ProtectDatabaseFC(FCB);
+
+            //If everything is OK proceed
+            if (FCT.Check)
+            {
+                //Insert FC in table
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
+                {
+                    string updateQuarry = "update Kontrolldatum set Kontrolltyp = @Kontrolltyp, FromDate = @FromDate, ToDate = @ToDate where id = @ID";
+                    SqlCommand cmd = new SqlCommand(updateQuarry, con);
+                    SqlParameter paramTyp = new SqlParameter("@Kontrolltyp", FCT.Typ);
+                    cmd.Parameters.Add(paramTyp);
+                    SqlParameter paramFrom = new SqlParameter("@FromDate", FCT.From);
+                    cmd.Parameters.Add(paramFrom);
+                    SqlParameter paramTo = new SqlParameter("@ToDate", FCT.To);
+                    cmd.Parameters.Add(paramTo);
+                    SqlParameter paramID = new SqlParameter("@ID", FCT.ID);
+                    cmd.Parameters.Add(paramID);
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+
+                    return FCT.ID;
+                }
+            }
+            else
+            {
+                return 0;
+            }
+        }
 
         /*
          * Classes needed for listing and data processing
@@ -316,6 +419,15 @@ namespace Source.Controllers
             public int ID { get; set; }
             public string User { get; set; }
             public string Level { get; set; }
+            public bool Check { get; set; }
+
+        }
+        public class FCRow
+        {
+            public int ID { get; set; }
+            public string Typ { get; set; }
+            public DateTime From { get; set; }
+            public DateTime To { get; set; }
             public bool Check { get; set; }
 
         }
@@ -384,6 +496,11 @@ namespace Source.Controllers
 
             return ut;
         }
+        private FCRow ProtectDatabaseFC(FCRow fcr)
+        {
+            return fcr;
+        }
+
 
         bool IsDigitsOnly(string str)
         {
@@ -436,6 +553,27 @@ namespace Source.Controllers
                 {
 
                     UserIdToReturn = Convert.ToInt64(rdr["UserID"]);
+
+                }
+            }
+
+            return UserIdToReturn;
+        }
+        private long GetMaximumKFCID()
+        {
+            long UserIdToReturn = 0;
+            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(CS))
+            {
+                string selectQuarry = "select max(id) as ID from Kontrolldatum";
+                SqlCommand cmd = new SqlCommand(selectQuarry, con);
+
+                con.Open();
+                SqlDataReader rdr = cmd.ExecuteReader();
+                while (rdr.Read())
+                {
+
+                    UserIdToReturn = Convert.ToInt64(rdr["ID"]);
 
                 }
             }

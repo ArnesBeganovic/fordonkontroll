@@ -39,7 +39,7 @@ var SearchTemplate = {
                             id: "FordonConstollsData",
                             header: true,
                             columns: [
-                                { id: "D", fillspace: true, header: "Tidigare Kontroller", template: "<a href='#' onClick='GetControl(#S#)'>#D#</a>", }
+                                { id: "D", fillspace: true, header: "Tidigare Kontroller", template: "<a href='#' onClick='CallGetControl(#S#)'>#D#</a>", }
                             ],
                             select: "row",
                             data: [],
@@ -200,8 +200,28 @@ var KonfFord = {
             height: 500,
             id: "FordonControllTableListConfig",
             columns: [
-                { id: "FordonControllDateRange", width: 300, header: "Kontrolldatum" },
-                { id: "FordonControllComment", fillspace: true, header: "Komentar" }
+                {
+                    id: "typ", fillspace: true, header: "Typ", template: function (ulaz) {
+                        console.log(ulaz)
+                        if (ulaz.typ == "1") {
+                            return "Planerad fordonskontroll";
+                        } else if (ulaz.typ == "2") {
+                            return "Flygande fordonskontroll";
+                        } else if (ulaz.typ == "3") {
+                            return "Spontan fordonskontroll";
+                        }
+                    }
+                },
+                {
+                    id: "from", width: 100, header: "From", template: function (ulaz) {
+                        return ulaz.from.toString().substr(0, 10)
+                    }
+                },
+                {
+                    id: "to", width: 100, header: "To", template: function (ulaz) {
+                        return ulaz.to.toString().substr(0, 10)
+                    }
+                }
             ],
             select: "row",
             data: [],
@@ -414,6 +434,24 @@ function GetUser() {
     })
 }
 
+function GetFC() {
+    $$("loadtextwin").show();
+
+    //Send request
+    jQuery.ajax({
+        url: 'api/config/getfc/',
+        type: 'GET',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            $$("FordonControllTableListConfig").clearAll();
+            $$("FordonControllTableListConfig").parse(data);
+            $$("loadtextwin").hide();
+        }
+    })
+}
+
 function GetFordonData() {
     /*
      * Opens Search Mode and process searching functionality
@@ -432,36 +470,12 @@ function GetFordonData() {
         $$("FordonConstollsData").clearAll();
 
         //Populate data in all tables
-        GetFordonHeaderData(); //Vehicle data and previous controlls
-        GetControl("New"); //Controll details. Latest by default.
+        GetControl($$("SearchBox").getValue(),"New"); //Controll details. Latest by default.
     } else {
         //Inform user to enter TaxiNr
         $$("loadextwin").hide();
         webix.message({ type: "error", text: "Please enter correct TaxiNr!" })
     }
-}
-
-function GetFordonHeaderData() {
-    /*
-     * Get user input and retrieve vehicle data based on it
-     */
-    jQuery.ajax({
-        url: 'api/search/fordonheader/',
-        type: 'POST',
-        contentType: 'application/json; charset=utf-8',
-        //Get data from webix
-        data: JSON.stringify({
-            id: $$("SearchBox").getValue()
-        }),
-        dataType: 'json',
-        //If success update webix. Data is Krav ID from database that was updated or created
-        success: function (data) {
-            PopulateVehicleData(data[0]); //Populate table with returned data
-            CallPopulateConstollsData(data[0].regNr, data[0].taxiNr, data[0].medlem);
-            $$("loadtextwin").hide();
-
-        }
-    })
 }
 
 function CallPopulateConstollsData(regNr, taxiNr, medlem) {
@@ -489,7 +503,11 @@ function CallPopulateConstollsData(regNr, taxiNr, medlem) {
 
 }
 
-function GetControl(ControlId) {
+function CallGetControl(ControlId) {
+    GetControl($$("SearchBox").getValue(), ControlId);
+}
+
+function GetControl(taxiNr,ControlId) {
     /*
      * Retrieves JSON object and populates KravData table.
      */
@@ -499,15 +517,23 @@ function GetControl(ControlId) {
         contentType: 'application/json; charset=utf-8',
         //Get data from webix
         data: JSON.stringify({
-            id: ControlId
-
+            idc: ControlId,
+            idt: taxiNr
         }),
         dataType: 'json',
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
+            $$("KravData").clearAll();
             $$("KravData").parse(data);
             $$("SaveControll").enable();
-            
+            PopulateVehicleData(data[0]); //Populate table with returned data
+            CallPopulateConstollsData(data[0].regNr, data[0].taxiNr, data[0].medlem);
+            ArnApp.each($$("FordonHeaderData").data.pull, function (index, value) {
+                if (value.DataCol == "Missing") {
+                   $$("SaveControll").disable();
+                }
+            })
+            $$("loadtextwin").hide();
 
         }
     })
@@ -537,39 +563,53 @@ function SaveControll() {
 
     //Populate rest of the data
     FHD = ReadFordonHeaderData();
-
     //Delete last ;
     IDString = IDString.substring(0, IDString.length - 1);
     StatusString = StatusString.substring(0, StatusString.length - 1);
 
-    //Send data
-    jQuery.ajax({
-        url: 'api/search/savecontrol',
-        type: 'POST',
-        contentType: 'application/json; charset=utf-8',
-        //Get data from webix
-        data: JSON.stringify({
-            "id": IDString,
-            "status": StatusString,
-            "regNr": FHD.RegNr,
-            "taxiNr": FHD.TaxiNr,
-            "medlem": FHD.Medlem
-        }),
-        dataType: 'json',
-        //If success update webix. Data is Krav ID from database that was updated or created
-        success: function (data) {
-            if (data == 0) {
-                //nije snimio
-                webix.message({type:"error",message:"Controll not saved!!!"})
-            } else {
-                //jeste snimio. TBD obavjesti korisnika
-                webix.message("Controll saved!!!")
-            }
-            GetFordonHeaderData(); //Recalculate header
-            $$("savetextwin").hide();
+    //CHeck if Vehicle exists one more time. Save Controll button should be closed and not allowed to enter here
+    //but if it fails prevent it for further processing 
 
+    var ShouldIContinue = true;
+    ArnApp.each($$("FordonHeaderData").data.pull, function (index, value) {
+        if (value.DataCol == "Missing") {
+            ShouldIContinue = false;
         }
     })
+    //Send data
+    if (ShouldIContinue) {
+        jQuery.ajax({
+            url: 'api/search/savecontrol',
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            //Get data from webix
+            data: JSON.stringify({
+                "id": IDString,
+                "status": StatusString,
+                "regNr": FHD.RegNr,
+                "taxiNr": FHD.TaxiNr,
+                "medlem": FHD.Medlem
+            }),
+            dataType: 'json',
+            //If success update webix. Data is Krav ID from database that was updated or created
+            success: function (data) {
+                if (data == 0) {
+                    //nije snimio
+                    webix.message({ type: "error", message: "Controll not saved!!!" })
+                } else {
+                    //jeste snimio. TBD obavjesti korisnika
+                    webix.message("Controll saved!!!")
+                }
+                CallGetControl(data); //Recalculate all TBD
+                $$("savetextwin").hide();
+
+            }
+        })
+    } else {
+        webix.message({ type: "error", text: "Please check TaxiNr. It seams Vehicle does not exists in Fordonregister!!! Controll not saved", expire: 5000 })
+        $$("savetextwin").hide();
+    }
+    
 }
 
 function SaveKrav() {
@@ -656,6 +696,45 @@ function SaveUser() {
     })
 }
 
+function SaveFordonControll() {
+    $$("saveFordonControllbtn").disable();
+    var valueInd = $$('NewFordonControllForm').config.prenosniID;
+
+    //Based on ID decide if it is POST or PUT request
+    if (valueInd == 0) {
+        sentType = "POST";
+    } else if (valueInd * 1 > 0) {
+        sentType = "PUT";
+    }
+
+    //Send request
+    jQuery.ajax({
+        url: 'api/config/savefc/',
+        type: sentType,
+        contentType: 'application/json; charset=utf-8',
+        //Get data from webix
+        data: JSON.stringify({
+            ID: valueInd,
+            Typ: $$("KontrolGrupp").getValue(),
+            From: $$("KontrollFran").getValue(),
+            To: $$("KontrollTill").getValue(),
+            Check: true
+        }),
+        dataType: 'json',
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            //Id has to be > 0
+            if (data * 1 > 0) {
+                //Get new updated data
+                GetFC();
+                $$("newFordonControll").hide();
+                //In case send data is not OK it will return 0
+            } else {
+                webix.message({ type: "error", text: "Not Saved!" })
+            }
+        }
+    })
+}
 /***************************
  *********POPULATE**********
  ***************************/
@@ -663,6 +742,7 @@ function PopulateVehicleData(data) {
     /*
      * Creates object and populates FordonHeaderData table based on provided data
      */
+    $$("FordonHeaderData").clearAll();
     DatatableData = [];
     DatatableData.push({ HeadCol: "Fabrikat", DataCol: data.fabrikat })
     DatatableData.push({ HeadCol: "RegNr", DataCol: data.regNr })
@@ -676,7 +756,6 @@ function PopulateConstollsData(data) {
     /*
      * Creates object and populates FordonConstollsData table based on provided data
      */
-
     DatatableData = [];
     ArnApp.each(data, function (index, value) {
         //Format string to YYYY-MM-DD HH:MM:SS
@@ -778,6 +857,7 @@ function ShowConfig(id) {
             break;
         case "KonfigureraFordonskontroll":
             $$("KonfScreen").showBatch("Fordonskontroll");
+            GetFC();
             break;
     }
 }
