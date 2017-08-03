@@ -6,7 +6,9 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Web;
 using System.Web.Http;
+using Fordonskontroll;
 
 namespace Source.Controllers
 {
@@ -27,27 +29,31 @@ namespace Source.Controllers
             List<PreviousControll> pcList = new List<PreviousControll>();
 
             //Connect and retrieve data
-            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
-            using (SqlConnection con = new SqlConnection(CS))
+            if (Login.CheckLogging(fi.user))
             {
-                SqlCommand cmd = new SqlCommand("getFordonControllsData", con);
-                cmd.CommandType = CommandType.StoredProcedure;
-                SqlParameter paramA = new SqlParameter("@regNr", fi.regNr);
-                cmd.Parameters.Add(paramA);
-                SqlParameter paramB = new SqlParameter("@taxiNr", fi.taxiNr);
-                cmd.Parameters.Add(paramB);
-                SqlParameter paramC = new SqlParameter("@medlem", fi.medlem);
-                cmd.Parameters.Add(paramC);
-                con.Open();
-                SqlDataReader rdr = cmd.ExecuteReader();
-                while (rdr.Read())
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
                 {
-                    PreviousControll pc = new PreviousControll();
-                    pc.D = rdr["Datum"].ToString();
-                    pc.S = rdr["SessionNr"].ToString();
-                    pcList.Add(pc);
+                    SqlCommand cmd = new SqlCommand("getFordonControllsData", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter paramA = new SqlParameter("@regNr", fi.regNr);
+                    cmd.Parameters.Add(paramA);
+                    SqlParameter paramB = new SqlParameter("@taxiNr", fi.taxiNr);
+                    cmd.Parameters.Add(paramB);
+                    SqlParameter paramC = new SqlParameter("@medlem", fi.medlem);
+                    cmd.Parameters.Add(paramC);
+                    con.Open();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        PreviousControll pc = new PreviousControll();
+                        pc.D = rdr["Datum"].ToString();
+                        pc.S = rdr["SessionNr"].ToString();
+                        pcList.Add(pc);
+                    }
                 }
             }
+            
             return pcList;
         }
 
@@ -61,31 +67,35 @@ namespace Source.Controllers
             List<CurrentControllRow> fd = new List<CurrentControllRow>();
 
             //Connect and retrieve data
-            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
-            using (SqlConnection con = new SqlConnection(CS))
+            if (Login.CheckLogging(tNr.user))
             {
-                SqlCommand cmd = new SqlCommand("getControll", con);
-                cmd.CommandType = CommandType.StoredProcedure;
-                SqlParameter taxiNr = new SqlParameter("@taxiNr", tNr.idt);
-                cmd.Parameters.Add(taxiNr);
-                SqlParameter param = new SqlParameter("@ControlId", tNr.idc);
-                cmd.Parameters.Add(param);
-                con.Open();
-                SqlDataReader rdr = cmd.ExecuteReader();
-                while (rdr.Read())
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
                 {
-                    CurrentControllRow fdOne = new CurrentControllRow();
-                    fdOne.id = Convert.ToInt64(rdr["KravID"]);
-                    fdOne.Krav = rdr["Krav"].ToString();
-                    fdOne.Status = Convert.ToInt32(rdr["Status"]);
-                    fdOne.Fabrikat = rdr["fabrikat"].ToString();
-                    fdOne.RegNr = rdr["regnr"].ToString();
-                    fdOne.Arsmodell = rdr["arsmodel"].ToString();
-                    fdOne.TaxiNr = rdr["taxinr"].ToString();
-                    fdOne.Medlem = Convert.ToInt32(rdr["medlemnr"]);
-                    fd.Add(fdOne);
+                    SqlCommand cmd = new SqlCommand("getControll", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter taxiNr = new SqlParameter("@taxiNr", tNr.idt);
+                    cmd.Parameters.Add(taxiNr);
+                    SqlParameter param = new SqlParameter("@ControlId", tNr.idc);
+                    cmd.Parameters.Add(param);
+                    con.Open();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        CurrentControllRow fdOne = new CurrentControllRow();
+                        fdOne.id = Convert.ToInt64(rdr["KravID"]);
+                        fdOne.Krav = rdr["Krav"].ToString();
+                        fdOne.Status = Convert.ToInt32(rdr["Status"]);
+                        fdOne.Fabrikat = rdr["fabrikat"].ToString();
+                        fdOne.RegNr = rdr["regnr"].ToString();
+                        fdOne.Arsmodell = rdr["arsmodel"].ToString();
+                        fdOne.TaxiNr = rdr["taxinr"].ToString();
+                        fdOne.Medlem = Convert.ToInt32(rdr["medlemnr"]);
+                        fd.Add(fdOne);
+                    }
                 }
             }
+            
             return fd;
         }
 
@@ -112,7 +122,7 @@ namespace Source.Controllers
                 IsOK = false;
             }
 
-            if (IsOK)
+            if (IsOK && Login.CheckLogging(ksr.user))
             {
                 //Save Controll in the Database
                 //Connect and retrieve data
@@ -183,6 +193,7 @@ namespace Source.Controllers
             return SessionNrIdToReturn;
         }
 
+        
     }  
 
     /*
@@ -193,12 +204,14 @@ namespace Source.Controllers
     {
         public string idt { get; set; }
         public string idc { get; set; }
+        public string user { get; set; }
     }
     public class FordonIdentification
     {
         public string regNr { get; set; }
         public string taxiNr { get; set; }
         public string medlem { get; set; }
+        public string user { get; set; }
     }
     public class PreviousControll
     {
@@ -223,5 +236,6 @@ namespace Source.Controllers
         public string regNr { get; set; }
         public string taxiNr { get; set; }
         public string medlem { get; set; }
+        public string user { get; set; }
     }    
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Fordonskontroll;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -8,6 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Web;
 using System.Web.Http;
 
 namespace Source.Controllers
@@ -19,8 +21,8 @@ namespace Source.Controllers
 
         //KRAV CONFIG ROUTES
         [Route("getkravlist")]
-        [System.Web.Http.HttpGet]
-        public List<KravRow> GKL()
+        [System.Web.Http.HttpPost]
+        public List<KravRow> GKL([FromBody] UserRowLog ur)
         {
             /*
              * Returns list of all requirement from Krav table 
@@ -29,32 +31,36 @@ namespace Source.Controllers
             List<KravRow> krList = new List<KravRow>();
 
             //Connect and retrieve data
-            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
-            using (SqlConnection con = new SqlConnection(CS))
+            if (Login.CheckLogging(ur.User))
             {
-                SqlCommand cmd = new SqlCommand("select * from KravTabell", con);
-                con.Open();
-                SqlDataReader rdr = cmd.ExecuteReader();
-                while (rdr.Read())
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
                 {
-                    //Get row
-                    KravRow kt = new KravRow();
-                    kt.id = Convert.ToInt64(rdr["KravID"]);
-                    kt.Krav = rdr["Krav"].ToString();
-                    kt.Status = Convert.ToInt32(rdr["Status"]);
-                    kt.Efterkontroll = Convert.ToInt32(rdr["Efterkontroll"]);
-                    kt.ExkluderadeBilar = Convert.ToInt32(rdr["ExkluderadeBilar"]);
+                    SqlCommand cmd = new SqlCommand("select * from KravTabell", con);
+                    con.Open();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        //Get row
+                        KravRow kt = new KravRow();
+                        kt.id = Convert.ToInt64(rdr["KravID"]);
+                        kt.Krav = rdr["Krav"].ToString();
+                        kt.Status = Convert.ToInt32(rdr["Status"]);
+                        kt.Efterkontroll = Convert.ToInt32(rdr["Efterkontroll"]);
+                        kt.ExkluderadeBilar = Convert.ToInt32(rdr["ExkluderadeBilar"]);
 
-                    //Translate reserved words in column "Krav"
-                    kt.Krav = kt.Krav.Replace("@s@", "select");
-                    kt.Krav = kt.Krav.Replace("@d@", "drop");
-                    kt.Krav = kt.Krav.Replace("@i@", "insert");
-                    kt.Krav = kt.Krav.Replace("@n@", "'");
+                        //Translate reserved words in column "Krav"
+                        kt.Krav = kt.Krav.Replace("@s@", "select");
+                        kt.Krav = kt.Krav.Replace("@d@", "drop");
+                        kt.Krav = kt.Krav.Replace("@i@", "insert");
+                        kt.Krav = kt.Krav.Replace("@n@", "'");
 
-                    //Add row to the list
-                    krList.Add(kt);
+                        //Add row to the list
+                        krList.Add(kt);
+                    }
                 }
             }
+            
             return krList;
         }
 
@@ -70,7 +76,7 @@ namespace Source.Controllers
             KravRow kravT = ProtectDatabaseKrav(kravB);
 
             //If everything is OK proceed
-            if (kravT.Check)
+            if (kravT.Check && Login.CheckLogging(kravB.User))
             {
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
                 using (SqlConnection con = new SqlConnection(CS))
@@ -110,7 +116,7 @@ namespace Source.Controllers
             KravRow kravT = ProtectDatabaseKrav(kravB);
 
             //If everything is OK proceed
-            if (kravT.Check)
+            if (kravT.Check && Login.CheckLogging(kravB.User))
             {
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
                 using (SqlConnection con = new SqlConnection(CS))
@@ -139,38 +145,41 @@ namespace Source.Controllers
 
         //USER CONFIG ROUTES
         [Route("getuserlist")]
-        [System.Web.Http.HttpGet]
-        public List<UserRow> GUL()
+        [System.Web.Http.HttpPost]
+        public List<UserRow> GUL([FromBody] UserRowLog urLog)
         {
             /*
              * Returns list of all users from user table 
              */
 
             List<UserRow> urList = new List<UserRow>();
-            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
 
-            using (SqlConnection con = new SqlConnection(CS))
+            if (Login.CheckLogging(urLog.User))
             {
-                SqlCommand cmd = new SqlCommand("select * from del_Users", con);
-                con.Open();
-                SqlDataReader rdr = cmd.ExecuteReader();
-                while (rdr.Read())
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
                 {
-                    UserRow ur = new UserRow();
-                    ur.ID = Convert.ToInt32(rdr["del_ID"]);
-                    ur.User = rdr["del_User"].ToString();
-                    ur.Level = rdr["del_Level"].ToString();
+                    SqlCommand cmd = new SqlCommand("select * from del_Users", con);
+                    con.Open();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        UserRow ur = new UserRow();
+                        ur.ID = Convert.ToInt32(rdr["del_ID"]);
+                        ur.User = rdr["del_User"].ToString();
+                        ur.Level = rdr["del_Level"].ToString();
 
-                    ur.User = ur.User.Replace("@s@", "select");
-                    ur.User = ur.User.Replace("@d@", "drop");
-                    ur.User = ur.User.Replace("@i@", "insert");
-                    ur.User = ur.User.Replace("@n@", "'");
+                        ur.User = ur.User.Replace("@s@", "select");
+                        ur.User = ur.User.Replace("@d@", "drop");
+                        ur.User = ur.User.Replace("@i@", "insert");
+                        ur.User = ur.User.Replace("@n@", "'");
 
-                    ur.Level = ur.Level.Replace("@s@", "select");
-                    ur.Level = ur.Level.Replace("@d@", "drop");
-                    ur.Level = ur.Level.Replace("@i@", "insert");
-                    ur.Level = ur.Level.Replace("@n@", "'");
-                    urList.Add(ur);
+                        ur.Level = ur.Level.Replace("@s@", "select");
+                        ur.Level = ur.Level.Replace("@d@", "drop");
+                        ur.Level = ur.Level.Replace("@i@", "insert");
+                        ur.Level = ur.Level.Replace("@n@", "'");
+                        urList.Add(ur);
+                    }
                 }
             }
             return urList;
@@ -191,7 +200,7 @@ namespace Source.Controllers
             userA.Check = DoesUserExists(userA.User, userA.ID);
 
             //If everything is OK proceed
-            if (userA.Check)
+            if (userA.Check && Login.CheckLogging(UserB.activeUser))
             {
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
                 using (SqlConnection con = new SqlConnection(CS))
@@ -230,7 +239,7 @@ namespace Source.Controllers
             UserT.Check = DoesUserExists(UserT.User, UserT.ID);
 
             //If everything is OK proceed
-            if (UserT.Check)
+            if (UserT.Check & Login.CheckLogging(UserB.activeUser))
             {
                 //Generate password - MD5 from provided email and then take letters 1,2,4,12,16,18,22,28
                 string hashUser = "testtesttesttesttesttesttesttesttesttesttesttestests";
@@ -295,31 +304,35 @@ namespace Source.Controllers
 
         //FORDONSKONTROLL ROUTES
         [Route("getfc")]
-        [System.Web.Http.HttpGet]
-        public List<FCRow> GUFC()
+        [System.Web.Http.HttpPost]
+        public List<FCRow> GUFC([FromBody] UserRowLog urLog)
         {
             /*
              * Returns list of all fordon controlls from Kontrolldatum table 
              */
 
             List<FCRow> fcList = new List<FCRow>();
-            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
 
-            using (SqlConnection con = new SqlConnection(CS))
+           if (Login.CheckLogging(urLog.User))
             {
-                SqlCommand cmd = new SqlCommand("select * from Kontrolldatum", con);
-                con.Open();
-                SqlDataReader rdr = cmd.ExecuteReader();
-                while (rdr.Read())
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
                 {
-                    FCRow fc = new FCRow();
-                    fc.ID = Convert.ToInt32(rdr["id"]);
-                    fc.Typ = rdr["Kontrolltyp"].ToString();
-                    fc.From = Convert.ToDateTime(rdr["FromDate"]);
-                    fc.To = Convert.ToDateTime(rdr["ToDate"]);
-                    fcList.Add(fc);
+                    SqlCommand cmd = new SqlCommand("select * from Kontrolldatum", con);
+                    con.Open();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        FCRow fc = new FCRow();
+                        fc.ID = Convert.ToInt32(rdr["id"]);
+                        fc.Typ = rdr["Kontrolltyp"].ToString();
+                        fc.From = Convert.ToDateTime(rdr["FromDate"]);
+                        fc.To = Convert.ToDateTime(rdr["ToDate"]);
+                        fcList.Add(fc);
+                    }
                 }
             }
+            
             return fcList;
         }
 
@@ -335,7 +348,7 @@ namespace Source.Controllers
             FCRow FCT = ProtectDatabaseFC(FCB);
 
             //If everything is OK proceed
-            if (FCT.Check)
+            if (FCT.Check && Login.CheckLogging(FCB.User))
             {
                 //Insert FC in table
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
@@ -373,7 +386,7 @@ namespace Source.Controllers
             FCRow FCT = ProtectDatabaseFC(FCB);
 
             //If everything is OK proceed
-            if (FCT.Check)
+            if (FCT.Check && Login.CheckLogging(FCB.User))
             {
                 //Insert FC in table
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
@@ -413,6 +426,7 @@ namespace Source.Controllers
             public int Efterkontroll { get; set; }
             public int ExkluderadeBilar { get; set; }
             public bool Check { get; set; }
+            public string User { get; set; }
         }
         public class UserRow
         {
@@ -420,6 +434,7 @@ namespace Source.Controllers
             public string User { get; set; }
             public string Level { get; set; }
             public bool Check { get; set; }
+            public string activeUser { get; set; }
 
         }
         public class FCRow
@@ -429,7 +444,12 @@ namespace Source.Controllers
             public DateTime From { get; set; }
             public DateTime To { get; set; }
             public bool Check { get; set; }
+            public string User { get; set; }
 
+        }
+        public class UserRowLog
+        {
+            public string User { get; set; }
         }
         /*
          * Methods
@@ -500,8 +520,6 @@ namespace Source.Controllers
         {
             return fcr;
         }
-
-
         bool IsDigitsOnly(string str)
         {
             foreach (char c in str)
@@ -512,7 +530,6 @@ namespace Source.Controllers
 
             return true;
         }
-
         private long GetMaximumKravID()
         {
             /*
@@ -667,6 +684,5 @@ namespace Source.Controllers
                 con.Close();
             }
         }
-
     }
 }

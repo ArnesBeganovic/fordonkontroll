@@ -268,7 +268,7 @@ var LoginTemplate = {
                 width: 500,
                 elements: [
                     { view: "text", id: "un", value: '', labelWidth: 150, label: "User Name" },
-                    { view: "text", id: "pass", value: '', labelWidth: 150, label: "Password" },
+                    { view: "text", type: "password", id: "pass", value: '', labelWidth: 150, label: "Password" },
                     {
                         cols: [
                           { template: "", width: 150 },
@@ -301,7 +301,7 @@ var LoggedTemplate = {
                 css: "row",
                 cols: [
                     {
-                        view: "button", id: "DashboradView", width: 150, type: "icon", icon: "dashboard", label: "Dashboard", click: "GetDashboard()", css: "col-md-1",//hidden:true,
+                        view: "button", id: "DashboradView", width: 150, type: "icon", icon: "dashboard", label: "Dashboard", click: "GetDashboard()", css: "col-md-1",hidden:true,
                     },
                     {},
                     { view: "text", placeholder: 'Search TaxiNr...', id: "SearchBox", width: 200 },
@@ -309,7 +309,7 @@ var LoggedTemplate = {
 
                     {},
                     {
-                        view: "menu", id: "ConfigButton", width: 250, subMenuPos: "bottom", layout: "y",//hidden:true,
+                        view: "menu", id: "ConfigButton", width: 250, subMenuPos: "bottom", layout: "y",hidden:true,
                         data: [
                             {
                                 id: "KonfigureraMenu", value: "Konfigurera",
@@ -328,17 +328,7 @@ var LoggedTemplate = {
                                 ]
                             }
                         ]
-                    },
-
-
-
-                    /* TBD
-                    ConfigButton se koristi u kodu. Nadji ga i vidi sta s njim. Vidljivost ovisi o SQL proceduri i podatku kojeg posalje
-                    { view:"button", id:"ConfigButton", width:150,type:"icon", icon:"cog", label:"Konfigurera", click:"GetKrav()" }
-                    /* TBD
-                     * otvori ovaj red ispod a izbrisi red iznad
-                        hidden:true
-                    */
+                    }
                 ]
             },
             TemplateController
@@ -348,7 +338,7 @@ var LoggedTemplate = {
 
 var ViewController = {
     id: "ViewScreen",
-    visibleBatch: "logged",
+    visibleBatch: "login",
     rows: [
             { rows: [{ animate: false, cells: [LoginTemplate] }], batch: "login" },
             { rows: [{ animate: false, cells: [LoggedTemplate] }], batch: "logged" }
@@ -380,6 +370,49 @@ function Main() {
         autoheight: true,
         rows: [ViewController]
     });
+
+    //Default framework is login but if user is already logged it should change it to respective layout
+    var x = document.cookie;
+    if (x.length > 8 && x.length < 18) {
+        iIndex = x.split("=")[0];
+        iValue = x.split("=")[1];
+        iValue = iValue.substring(5, iValue.length - 5);
+        //Send request
+        jQuery.ajax({
+            url: 'api/login/checkLogStatusForUser/',
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            data: JSON.stringify({
+                lt: iValue
+            }),
+            //If success update webix. Data is Krav ID from database that was updated or created
+            success: function (data) {
+                if (data == 0) {
+                    //Not logged
+                    webix.message({ type: "error", text: "Wrong user name or password!" })
+                    window.activeUser = 0;
+                } else if (data == 1) {
+                    //Standard user - show only search tab
+                    $$("ViewScreen").showBatch("logged");
+                    window.activeUser = iValue;
+                } else if (data == 2) {
+                    //Special user - show search tab and dashboard
+                    $$("ViewScreen").showBatch("logged");
+                    $$("DashboradView").show();
+                    window.activeUser = iValue;
+                } else if (data == 3) {
+                    //Administrator - show search tab, dashboard and config
+                    $$("ViewScreen").showBatch("logged");
+                    $$("DashboradView").show();
+                    $$("ConfigButton").show();
+                    window.activeUser = iValue;
+                }
+                $$("loadtextwin").hide();
+            }
+        })
+    }
+
 }
 
 /***************************
@@ -402,9 +435,12 @@ function GetKrav() {
     //Send request
     jQuery.ajax({
         url: 'api/config/getkravlist/',
-        type: 'GET',
+        type: 'POST',
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
             $$("KravTableListConfig").clearAll();
@@ -421,9 +457,12 @@ function GetUser() {
     //Send request
     jQuery.ajax({
         url: 'api/config/getuserlist/',
-        type: 'GET',
+        type: 'POST',
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
             console.log(data)
@@ -440,7 +479,10 @@ function GetFC() {
     //Send request
     jQuery.ajax({
         url: 'api/config/getfc/',
-        type: 'GET',
+        type: 'POST',
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         //If success update webix. Data is Krav ID from database that was updated or created
@@ -487,7 +529,8 @@ function CallPopulateConstollsData(regNr, taxiNr, medlem) {
         data: JSON.stringify({
             RegNr: regNr,
             TaxiNr: taxiNr,
-            Medlem: medlem
+            Medlem: medlem,
+            User: window.activeUser
 
         }),
         dataType: 'json',
@@ -518,7 +561,8 @@ function GetControl(taxiNr,ControlId) {
         //Get data from webix
         data: JSON.stringify({
             idc: ControlId,
-            idt: taxiNr
+            idt: taxiNr,
+            user:window.activeUser
         }),
         dataType: 'json',
         //If success update webix. Data is Krav ID from database that was updated or created
@@ -588,7 +632,8 @@ function SaveControll() {
                 "status": StatusString,
                 "regNr": FHD.RegNr,
                 "taxiNr": FHD.TaxiNr,
-                "medlem": FHD.Medlem
+                "medlem": FHD.Medlem,
+                "user": window.activeUser
             }),
             dataType: 'json',
             //If success update webix. Data is Krav ID from database that was updated or created
@@ -637,7 +682,8 @@ function SaveKrav() {
             Status: $$("KravB").getValue(),
             Efterkontroll: $$("KravC").getValue(),
             ExkluderadeBilar: $$("KravD").getValue(),
-            Check: true
+            Check: true,
+            User: window.activeUser
         }),
         dataType: 'json',
         //If success update webix. Data is Krav ID from database that was updated or created
@@ -678,7 +724,8 @@ function SaveUser() {
             ID: valueInd,
             User: $$("UserA").getValue(),
             Level: $$("UserB").getValue(),
-            Check: true
+            Check: true,
+            activeUser: window.activeUser
         }),
         dataType: 'json',
         //If success update webix. Data is Krav ID from database that was updated or created
@@ -718,7 +765,8 @@ function SaveFordonControll() {
             Typ: $$("KontrolGrupp").getValue(),
             From: $$("KontrollFran").getValue(),
             To: $$("KontrollTill").getValue(),
-            Check: true
+            Check: true,
+            User: window.activeUser
         }),
         dataType: 'json',
         //If success update webix. Data is Krav ID from database that was updated or created
@@ -800,7 +848,7 @@ function ShowKravWindow(id) {
 
 function ShowUserWindow(id) {
     /*
-     * Show New User Window and populate form if existing selected
+     * Sow New User Window and populate form if existing selected
      */
     $$("newUser").show();
     $$("saveUserbtn").enable();
@@ -900,7 +948,8 @@ function ReadFordonHeaderData() {
 function Login() {
     var un = $$("un").getValue();
     var pass = $$("pass").getValue();
-
+    var dodajA = Math.random().toString(36).substr(2, 5)
+    var dodajB = Math.random().toString(36).substr(2, 5)
     //Check length. Un or pass should not be longer than 50 characters
     if (un.length >= 50 || pass.length >= 50) {
         alert("ne meere")
@@ -916,35 +965,39 @@ function Login() {
         return;
     }
 
-    //Check if user exists
-    ArnApp.post({
-        url: "getUserData.asp",
-        type: "json",
-        uspjeh: function (data) {
-            if (data[0].l != "0") {
+    //Send request
+    jQuery.ajax({
+        url: 'api/login/logUser/',
+        type: "POST",
+        contentType: 'application/json; charset=utf-8',
+        //Get data from webix
+        data: JSON.stringify({
+            un: un,
+            pass: pass
+        }),
+        dataType: 'json',
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            activeUser = data.ajdi;
+            document.cookie = "au=" + dodajA + window.activeUser + dodajB;
+            if (data.logType == 0) {
+                //Not logged
+                webix.message({ type: "error", text: "Wrong user name or password!" })
+            } else if (data.logType == 1) {
+                //Standard user - show only search tab
                 $$("ViewScreen").showBatch("logged");
-                LoginTemplate.user = data[0].u;
-                //Server returns object with property L which can be 0 which means user does not
-                //exists, Alogged (admin) or
-                //ULogged (user). Based on it show or hide Config button
-                if (data[0].l == "Administrator") {
-                    $$("ConfigButton").show();
-                    $$("DashboradView").show();
-                } else if (data[0].l == "Special") {
-                    $$("DashboradView").show();
-                }
-
-            } else {
-                webix.message({ type: "error", text: "Incorrect Login Data!" })
+            } else if (data.logType == 2) {
+                //Special user - show search tab and dashboard
+                $$("ViewScreen").showBatch("logged");
+                $$("DashboradView").show();
+            } else if (data.logType == 3) {
+                //Administrator - show search tab, dashboard and config
+                $$("ViewScreen").showBatch("logged");
+                $$("DashboradView").show();
+                $$("ConfigButton").show();
             }
-        },
-        neuspjeh: function () { console.log("Call Login failes") },
-        parametri: [{
-            "un": un,
-            "pass": pass
-        }]
+        }
     })
-
 }
 
 function SendMainForgetPassword() {
@@ -980,3 +1033,4 @@ function SendMainForgetPassword() {
 function CodeString(value) {
     return value.replace("'", "@_@")
 }
+
