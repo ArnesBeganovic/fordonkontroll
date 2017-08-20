@@ -301,6 +301,28 @@ namespace Source.Controllers
             }
         }
 
+        [Route("logoutuser")]
+        [System.Web.Http.HttpPost]
+        public Boolean LGU([FromBody] UserRowLog urLog)
+        {
+            /*
+             * Returns 0 or 1 based on if user is logged out 
+             */
+            if (Login.CheckLogging(urLog.User))
+            {
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
+                {
+                    SqlCommand cmd = new SqlCommand("UPDATE del_Users SET del_LastLogin = '2010-01-01 00:00:00.000' WHERE del_ID = " + urLog.User, con);
+                    con.Open();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                }
+            }
+            return true;
+        }
+
+        
+
 
         //FORDONSKONTROLL ROUTES
         [Route("getfc")]
@@ -318,7 +340,7 @@ namespace Source.Controllers
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
                 using (SqlConnection con = new SqlConnection(CS))
                 {
-                    SqlCommand cmd = new SqlCommand("select * from Kontrolldatum", con);
+                    SqlCommand cmd = new SqlCommand("select * from Kontrolldatum where Kontrolltyp <> 3", con);
                     con.Open();
                     SqlDataReader rdr = cmd.ExecuteReader();
                     while (rdr.Read())

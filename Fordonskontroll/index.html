@@ -15,12 +15,44 @@
             color: blue;
             font-weight: bold;
         }
+        .webix_axis_item_x {
+            -ms-transform: rotate(270deg); /* IE 9 */
+            -webkit-transform: rotate(270deg); /* Chrome, Safari, Opera */
+            transform: rotate(270deg);
+            padding-top: 10px;
+            left:80px;
+            top:200px;
+        }
+
+        .container {
+            width: 40%;
+            height: 40%;
+            margin: 0 auto;
+        }
+
+            .container img.wide {
+                max-width: 100%;
+                max-height: 100%;
+                height: auto;
+            }
+
+            .container img.tall {
+                max-height: 100%;
+                max-width: 100%;
+                width: auto;
+            }
+        .webix_scroll_cont {
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            padding-top: 0px;
+            margin-top: 2px;
+        }
     </style>
 </head>
 
 <body onload="Main()">
 
-    <script>
+<script>
         window.activeUser = "";
 webix.ui({
 	id:"savetextwin",
@@ -46,7 +78,7 @@ webix.ui({
 	body:"Loading..."
  }).hide();
 
-
+//New Krav
 webix.ui({
 	id:"newKrav",
 	view:"window",
@@ -106,7 +138,7 @@ webix.ui({
 	}
  }).hide();
 
-
+//New User
  webix.ui({
 	id:"newUser",
 	view:"window",
@@ -153,6 +185,7 @@ webix.ui({
 	}
  }).hide();
 
+//New FordonsControll
  webix.ui({
 	id:"newFordonControll",
 	view:"window",
@@ -214,6 +247,7 @@ webix.ui({
 	}
  }).hide();
 
+//Change Pass
  webix.ui({
 	id:"changePassWindow",
 	view:"window",
@@ -235,16 +269,17 @@ webix.ui({
 		width:500,
 		elements: [
 			{ view:"text", id:"chCurrent", value:'',labelWidth:150, label:"Current Password" },
-			{ view:"text", id:"chNewA", value:'', labelWidth:150,label:"New Password"},
-			{ view:"text", id:"chNewB", value:'', labelWidth:150,label:"Repeat Password"},
+            { view: "text", id: "chNewA", type: "password",value:'', labelWidth:150,label:"New Password"},
+            { view: "text", id: "chNewB", value: '', type: "password", labelWidth:150,label:"Repeat Password"},
 			{ margin:5, cols:[
-				{ view:"button", value:"Update" , type:"form" },
-				{ view:"button", value:"Cancel" }
+                { view: "button", value: "Update", type: "form", id: "btn_SendMainChangePass", click: "SendMainChangePassword()"},
+                { view: "button", value: "Cancel", click: "$$('changePassWindow').hide();" }
 			]}
 		]
 	}
  }).hide();
 
+//Forget Pass
  webix.ui({
 	id:"forgetPassWindow",
 	view:"window",
@@ -268,13 +303,13 @@ webix.ui({
 			{ view:"text", id:"frUN", value:'',labelWidth:150, label:"Your Email" },
 			{ margin:5, cols:[
 				{ view:"button", value:"Send" , id:"btn_SendMainForgetPass", type:"form", click:"SendMainForgetPassword()"},
-				{ view:"button", value:"Cancel" }
+                { view: "button", value: "Cancel", click: "$$('forgetPassWindow').hide();" }
 			]},
 			{view:"label",label:"",css:"lbl_reg", id:"lbl_msg_reg"}
 		]
 	}
  }).hide();
 
-    </script>
+</script>
 </body>
 </html>

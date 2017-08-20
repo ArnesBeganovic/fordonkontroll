@@ -3,12 +3,222 @@
  *********************************************************************************************/
 
 var DashboardTemplate = {
-    template: "Dashboard",
-    height: 50
+    view: "tabview",
+    tabbar: { optionWidth: 200 },
+    cells: [
+        {
+            header: "Current status",
+            body: {
+                view: "scrollview",
+                id: "scrollviewLatest",
+                scroll: "y",
+                body: {
+                    rows: [
+                        {
+                            view: "chart",
+                            id: "KravPerYearBarChartLatest",
+                            type: "stackedBar",
+                            barWidth: 60,
+                            padding: { bottom: 100 },
+                            height:450,
+                            xAxis: {
+                                template: "<div class='rotated'>#krav#</div>"
+                            },
+                            yAxis: {
+                            },
+                            legend: {
+                                values: [{ text: "Saknas", color: "#f8ddd8" }, { text: "EJ OK", color: "#da472c" }, { text: "OK", color: "#bfda2b" }],
+                                valign: "middle",
+                                align: "right",
+                                width: 90,
+                                layout: "y"
+                            },
+                            series: [
+                                {
+                                    value: "#ok#",
+                                    color: "#bfda2b",
+                                    label: "#ok#",
+                                    tooltip: {
+                                        template: "#ok#"
+                                    }
+                                },
+
+                                {
+                                    value: "#ejok#",
+                                    color: "#da472c",
+                                    label: "#ejok#",
+                                    tooltip: {
+                                        template: "#ejok#"
+                                    }
+                                },
+                                {
+                                    value: "#saknas#",
+                                    label: "#saknas#",
+                                    color: "#f8ddd8",
+                                    tooltip: {
+                                        template: "#saknas#"
+                                    }
+                                }
+
+                            ],
+                            data: []
+                        },
+                        { template: "", height: 100 }
+                    ]
+                }
+            }
+        },
+        {
+            header: "Latest Controll",
+            body: {
+                view: "scrollview",
+                id: "scrollview",
+                scroll: "y",
+                body: {
+                    rows: [
+                        {
+                            view: "chart",
+                            id: "KravPerYearBarChart",
+                            type: "bar",
+                            barWidth: 20,
+                            radius: 2,
+                            height:400,
+                            gradient: "rising",
+                            padding: { bottom: 100 },
+                            xAxis: {
+                                template: "'#Krav#"
+                            },
+                            yAxis: {
+                                start: 0,
+                                step: 10,
+                                end: 100
+                            },
+                            legend: {
+                                values: [{ text: "Controll -2", color: "#58dccd" }, { text: "Controll - 1", color: "#a7ee70" }, { text: "Controll", color: "#36abee" }],
+                                valign: "middle",
+                                align: "right",
+                                width: 90,
+                                layout: "y"
+                            },
+                            series: [
+                                {
+                                    value: "#CMinusTwo#",
+                                    color: "#58dccd",
+                                    tooltip: {
+                                        template: "#CMinusTwo#"
+                                    }
+                                },
+                                {
+                                    value: "#CMinusOne#",
+                                    color: "#a7ee70",
+                                    tooltip: {
+                                        template: "#CMinusOne#"
+                                    }
+                                },
+                                {
+                                    value: "#CMinusZero#",
+                                    color: "#36abee",
+                                    tooltip: {
+                                        template: "#CMinusZero#"
+                                    }
+                                }
+                            ],
+                            data: []
+                        },
+                        {
+                            cols: [
+                                { template:"<div style='width:100%;text-align:center'>Efterkontroll</div>", height:40},
+                                { template: "<div style='width:100%;text-align:center'>Närvaro</div>", height: 40 }
+                            ]
+                        },
+                        {
+                            height: 300,
+                            cols: [
+                                {
+                                    view: "chart",
+                                    type: "pie3D",
+                                    container: "chartDiv",
+                                    value: "#andel#",
+                                    color: "#color#",
+                                    label: "#efterKontrolTyp#",
+                                    pieInnerText: "#andel#",
+                                    shadow: 0,
+                                    id: "efterkontroll",
+                                    data: []
+                                },
+                                {
+                                    view: "chart",
+                                    type: "pie3D",
+                                    container: "chartDiv",
+                                    value: "#andel#",
+                                    color: "#color#",
+                                    label: "#narvaroTyp#",
+                                    pieInnerText: "#andel#",
+                                    shadow: 0,
+                                    id: "narvaro",
+                                    data: []
+                                }
+                            ]
+                        },
+                        {template:"",height:100}
+                    ]
+                }
+            }
+            
+        },
+        {
+            header: "Medlem",
+            id: "medlemTab",
+            rows: [
+                {
+                    height:40,
+                    cols: [
+                        {
+                            view: "richselect",
+                            id:"ControlSelector",
+                            label: "Kontroll",
+                            value: 1, options: [
+                                { "id": 1, "value": "Select" },
+                                { "id": 2, "value": "Papaya" },
+                                { "id": 3, "value": "Apple" }
+                            ]
+                        },
+                        { view: "text", placeholder: 'Medlem...', id: "MedlemSearch", width: 100 },
+                        { view: "button", value: "Search", width: 100, click: "GetMedlemDashboard()" },
+                        {},
+                        { view: "button", value: "Export To PDF", width: 100, click: "PrintToPdf()" },
+                    ]
+                },
+                {
+                    body: {
+                        view: "scrollview",
+                        id: "scrollviewMedlem",
+                        scroll: "y",
+                        body: {
+                            rows: [
+                                {
+                                    view: "datatable",
+                                    id: "medlemDatatable",
+                                    columns: [
+                                        { id: "krav", header: "", width: 200 },
+                                        { id: "empty", header: "", fillspace: true}
+                                    ],
+                                    data: [
+                                        { krav: ""}
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+
+        }
+    ]
 }
 
+
 var SearchTemplate = {
-    height: 700,
     rows: [
         {
             cols: [
@@ -45,7 +255,7 @@ var SearchTemplate = {
                             data: [],
                         }
                     ],
-                    gravity: 0.2
+                    gravity: 0.35
                 },
                 {
                     view: "datatable",
@@ -68,15 +278,16 @@ var SearchTemplate = {
                     gravity: 0.8,
                     on: {
                         "onItemClick": function (id) {
-                            //Update data
-                            record = $$("KravData").getItem(id.row);
-                            if (record.status == 1) {
-                                record.status = "0";
-                            } else {
-                                record.status = "1"
+                            if (id.column == "status") {
+                                //Update data
+                                record = $$("KravData").getItem(id.row);
+                                if (record.status == 1) {
+                                    record.status = "0";
+                                } else {
+                                    record.status = "1"
+                                }
+                                $$("KravData").updateItem(id.row, record);
                             }
-                            $$("KravData").updateItem(id.row, record);
-
                         }
                     }
                 }
@@ -104,7 +315,6 @@ var KonfKrav = {
                 },
     {
         view: "datatable",
-        height: 500,
         id: "KravTableListConfig",
         columns: [
             { id: "krav", width: 300, header: "Krav" },
@@ -202,7 +412,6 @@ var KonfFord = {
             columns: [
                 {
                     id: "typ", fillspace: true, header: "Typ", template: function (ulaz) {
-                        console.log(ulaz)
                         if (ulaz.typ == "1") {
                             return "Planerad fordonskontroll";
                         } else if (ulaz.typ == "2") {
@@ -237,6 +446,7 @@ var KonfFord = {
 var ConfigurationTemplate = {
     id: "KonfScreen",
     visibleBatch: "Krav",
+    height:500,
     rows: [
             { rows: [{ animate: false, cells: [KonfKrav] }], batch: "Krav" },
             { rows: [{ animate: false, cells: [KonfAnv] }], batch: "Anvandare" },
@@ -257,10 +467,11 @@ var TemplateController = {
 var LoginTemplate = {
     user: "",
     rows: [
-        {},
+        { template: "<div class='container'><img style='padding-left:21px' src=../img/taxigbglogo.png><div>", height: 100 },
         {
             cols: [
-            {},
+                {},
+                
             {
                 view: "form",
                 id: "LoginForm",
@@ -277,7 +488,7 @@ var LoginTemplate = {
                           {}
                         ]
                     },
-                    { view: "label", label: "<a target='_self' href='#' onClick='ChangePassword()'>Forget Password</a>" },
+                    { view: "label", label: "<a target='_self' href='#' onClick='ForgetPassword()'>Forget Password</a>" },
                     { view: "label", label: "", id: "lbl_msg_gen" }
                 ]
             },
@@ -295,13 +506,13 @@ var LoggedTemplate = {
      * with Admin rights
      */
     rows: [
-            { template: "Logo and stuff", height: 100 },
+        { template: "<div class='container'><img style='padding-left:21px' src=../img/taxigbglogo.png><div>", height: 100 },
             {
                 view: "toolbar",
                 css: "row",
                 cols: [
                     {
-                        view: "button", id: "DashboradView", width: 150, type: "icon", icon: "dashboard", label: "Dashboard", click: "GetDashboard()", css: "col-md-1",hidden:true,
+                        view: "button", id: "DashboradView", width: 150, label: "Dashboard", click: "GetDashboard()",hidden:true,
                     },
                     {},
                     { view: "text", placeholder: 'Search TaxiNr...', id: "SearchBox", width: 200 },
@@ -309,12 +520,13 @@ var LoggedTemplate = {
 
                     {},
                     {
-                        view: "menu", id: "ConfigButton", width: 250, subMenuPos: "bottom", layout: "y",hidden:true,
+                        view: "menu", id: "ConfigButton", width: 100, hidden: true, height: 29,
                         data: [
                             {
                                 id: "KonfigureraMenu", value: "Konfigurera",
                                 config: {
                                     width: 200,
+                                    
                                     on: {
                                         onItemClick: function (id) {
                                             ShowConfig(id);
@@ -322,9 +534,11 @@ var LoggedTemplate = {
                                     }
                                 },
                                 submenu: [
-                                    { id: "KonfigureraKrav", value: "Krav", icon: "qrcode", width: 200 },
-                                    { id: "KonfigureraAnvandare", value: "Användare", icon: "user", width: 200 },
-                                    { id: "KonfigureraFordonskontroll", value: "Fordonskontroll", icon: "calendar", width: 200 }
+                                    { id: "KonfigureraKrav", value: "Krav"},
+                                    { id: "KonfigureraAnvandare", value: "Användare" },
+                                    { id: "KonfigureraFordonskontroll", value: "Fordonskontroll" },
+                                    { id: "ChangePassword", value: "Ändra lösenordet" },
+                                    { id: "Logout", value: "Log Out" }
                                 ]
                             }
                         ]
@@ -339,6 +553,7 @@ var LoggedTemplate = {
 var ViewController = {
     id: "ViewScreen",
     visibleBatch: "login",
+    type:"space",
     rows: [
             { rows: [{ animate: false, cells: [LoginTemplate] }], batch: "login" },
             { rows: [{ animate: false, cells: [LoggedTemplate] }], batch: "logged" }
@@ -366,8 +581,6 @@ function Main() {
     * Entry point that generates framework
     */
     new webix.ui({
-        fullscreen: true,
-        autoheight: true,
         rows: [ViewController]
     });
 
@@ -390,7 +603,7 @@ function Main() {
             success: function (data) {
                 if (data == 0) {
                     //Not logged
-                    webix.message({ type: "error", text: "Wrong user name or password!" })
+                    //webix.message({ type: "error", text: "Wrong user name or password!" })
                     window.activeUser = 0;
                 } else if (data == 1) {
                     //Standard user - show only search tab
@@ -423,6 +636,116 @@ function GetDashboard() {
     * Opens Dashboard
     */
     $$("MainScreen").showBatch("dash");
+
+    //Get barchart data latest big controlls
+    jQuery.ajax({
+        url: 'api/dashboard/KravPerYearBarChart/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            var transformedData = KravPerYearBarChartData(data);
+
+            $$("KravPerYearBarChart").clearAll();
+            $$("KravPerYearBarChart").parse(transformedData);
+            $$("KravPerYearBarChart").refresh();
+        }
+    })
+
+    //Get barchart data latest status
+    jQuery.ajax({
+        url: 'api/dashboard/KravToday/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            $$("KravPerYearBarChartLatest").clearAll();
+            $$("KravPerYearBarChartLatest").parse(data);
+            $$("KravPerYearBarChartLatest").refresh();
+        }
+    })
+
+    //Get Piechart data for efterkontroll
+    jQuery.ajax({
+        url: 'api/dashboard/Efterkontroll/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            var ekData = [
+                { andel: data[0].ingen, efterKontrolTyp: "Ingen", color: "#ee3639" },
+                { andel: data[0].senare, efterKontrolTyp: "Senare", color: "#ee9e36" },
+                { andel: data[0].snarast, efterKontrolTyp: "Snarast", color: "#eeea36" }
+            ];
+            $$("efterkontroll").clearAll();
+            $$("efterkontroll").parse(ekData);
+            $$("efterkontroll").refresh();
+        }
+    })
+   
+    //Get Piechart data for Narvaro
+    jQuery.ajax({
+        url: 'api/dashboard/Narvaro/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            /* RESULT
+            var narvaroData = [
+                { andel: "20", narvaroTyp: "EJ OK", color: "#ee9e36" },
+                { andel: "80", narvaroTyp: "OK", color: "#86EF36" }
+            ];
+            */
+            $$("narvaro").clearAll();
+            $$("narvaro").parse(data);
+            $$("narvaro").refresh();
+            
+        }
+    })
+
+    //Get Controll List for Medlemmar tab
+    jQuery.ajax({
+        url: 'api/dashboard/KontrollTillMedlemmar/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+
+            var trData = [{ id: "1555555", value: "Select" }]
+
+            for (i = 0; i < data.length; i++) {
+                trData.push({
+                    id: data[i].id,
+                    value:data[i].value
+                })
+            }
+            $$("ControlSelector").getPopup().getList().clearAll();
+            $$("ControlSelector").getPopup().getList().parse(trData);
+            $$("ControlSelector").refresh();
+            $$("ControlSelector").setValue(0);
+            $$("ControlSelector").refresh();
+        }
+    })
 }
 
 function GetKrav() {
@@ -465,7 +788,6 @@ function GetUser() {
         }),
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
-            console.log(data)
             $$("UserTableListConfig").clearAll();
             $$("UserTableListConfig").parse(data);
             $$("loadtextwin").hide();
@@ -583,6 +905,40 @@ function GetControl(taxiNr,ControlId) {
     })
 }
 
+function GetMedlemDashboard() {
+    var plControll = $$("ControlSelector").getValue();
+    var selMedlem = $$("MedlemSearch").getValue();
+
+    if (plControll == 1555555 || plControll.length==0 || selMedlem.length != 5) {
+        webix.message({ type: "error", text: "Select Controll and type correct Medlem nr!!!" });
+        return;
+    }
+    //Get data for Medlem table
+    jQuery.ajax({
+        url: 'api/dashboard/DashboardMedlemmarCall/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser,
+            Controll: plControll,
+            Medlem:selMedlem
+        }),
+
+        success: function (data) {
+
+            var transformedData = MedlemTabellData(data);
+            var transformedColumns = MedlemTabellColumns(transformedData[0],data[0].medlem);
+
+
+            $$("medlemDatatable").config.columns = transformedColumns;
+            $$("medlemDatatable").refreshColumns();
+            $$("medlemDatatable").clearAll();
+            $$("medlemDatatable").parse(transformedData);
+            $$("medlemDatatable").refresh();
+        }
+    })
+}
 /***************************
  *********SAVE***************
  ***************************/
@@ -753,6 +1109,11 @@ function SaveFordonControll() {
     } else if (valueInd * 1 > 0) {
         sentType = "PUT";
     }
+    var dateFrom = $$("KontrollFran").getValue();
+    var dateTo = $$("KontrollTill").getValue();
+
+    var dateFromString = dateFrom.getFullYear().toString() + '-' + ("0" + (dateFrom.getMonth() + 1)).slice(-2) + '-' + ("0" + dateFrom.getDate()).slice(-2);
+    var dateToString = dateTo.getFullYear().toString() + '-' + ("0" + (dateTo.getMonth() + 1)).slice(-2) + '-' + ("0" + dateTo.getDate()).slice(-2);
 
     //Send request
     jQuery.ajax({
@@ -763,8 +1124,8 @@ function SaveFordonControll() {
         data: JSON.stringify({
             ID: valueInd,
             Typ: $$("KontrolGrupp").getValue(),
-            From: $$("KontrollFran").getValue(),
-            To: $$("KontrollTill").getValue(),
+            From: dateFromString,
+            To: dateToString,
             Check: true,
             User: window.activeUser
         }),
@@ -807,9 +1168,9 @@ function PopulateConstollsData(data) {
     DatatableData = [];
     ArnApp.each(data, function (index, value) {
         //Format string to YYYY-MM-DD HH:MM:SS
-        var Datum = value.d.substring(0, 4) + '-' + value.d.substring(4, 6) + '-' + value.d.substring(6, 8) + ' ' + value.d.substring(8, 10) + ':' + value.d.substring(10, 12) + ':' + value.d.substring(12, 14);
+        //var Datum = value.d.substring(0, 4) + '-' + value.d.substring(4, 6) + '-' + value.d.substring(6, 8) + ' ' + value.d.substring(8, 10) + ':' + value.d.substring(10, 12) + ':' + value.d.substring(12, 14);
         DatatableData.push({
-            D: Datum,
+            D: value.d,
             S: value.s
         })
     })
@@ -875,21 +1236,48 @@ function ShowFordonControllWindow(id) {
     $$("saveFordonControllbtn").enable();
     //Set default values
     $$('NewFordonControllForm').config.prenosniID = 0;
-    //$$("UserA").setValue(""); POSTAVI DEFAULT KALENDAR VRIJEDNOSTI
-    //$$("UserB").setValue("Standard");
-
     //Check if existing selected and set those values if is. It will populate form
     ArnApp.each($$("FordonControllTableListConfig").data.pull, function (index, value) {
         if (value.id == id) {
             $$('NewFordonControllForm').config.prenosniID = value.id;
-            //$$("UserA").setValue(value.User); // POSTAVI CUSTOM KALENDAR VRIJEDNOSTI
-            //$$("UserB").setValue(value.Status);
+            $$("KontrolGrupp").setValue(value.typ);
+            var dateFrom = value.from.substr(0,10);
+            var dateTo = value.to.substr(0, 10);
+
+            $$("KontrollFran").setValue(dateFrom); // POSTAVI CUSTOM KALENDAR VRIJEDNOSTI
+            $$("KontrollTill").setValue(dateTo);
+        } else {
+            $$("KontrolGrupp").setValue(1);
+            $$("KontrollFran").setValue(""); // POSTAVI CUSTOM KALENDAR VRIJEDNOSTI
+            $$("KontrollTill").setValue("");
         }
     })
 }
 
-function ChangePassword() {
+function ForgetPassword() {
     $$("forgetPassWindow").show();
+}
+
+function ChangePassword() {
+    $$("changePassWindow").show();
+}
+
+function Logout() {
+    //Logout user
+    jQuery.ajax({
+        url: 'api/config/logoutuser/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        //Get data from webix
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
+        dataType: 'json',
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            location.reload();
+        }
+    })
 }
 
 function ShowConfig(id) {
@@ -906,6 +1294,12 @@ function ShowConfig(id) {
         case "KonfigureraFordonskontroll":
             $$("KonfScreen").showBatch("Fordonskontroll");
             GetFC();
+            break;
+        case "ChangePassword":
+            ChangePassword();
+            break;
+        case "Logout":
+            Logout();
             break;
     }
 }
@@ -952,7 +1346,6 @@ function Login() {
     var dodajB = Math.random().toString(36).substr(2, 5)
     //Check length. Un or pass should not be longer than 50 characters
     if (un.length >= 50 || pass.length >= 50) {
-        alert("ne meere")
         return;
     }
 
@@ -1000,7 +1393,156 @@ function Login() {
     })
 }
 
+
+function CodeString(value) {
+    return value.replace("'", "@_@")
+}
+
+function KravPerYearBarChartData(data) {
+    //preuzmi jedinstvene varijable za krav i datum
+    var lookup = {};
+    var items = data;
+    var uniqueKrav = [];
+    var uniqueDatum = [];
+    for (var item, i = 0; item = items[i++];) {
+        var krav = item.krav;
+        var datum = item.datum;
+
+        if (!(krav in lookup)) {
+            lookup[krav] = 1;
+            uniqueKrav.push(krav);
+        }
+
+        if (!(datum in lookup)) {
+            lookup[datum] = 1;
+            uniqueDatum.push(datum);
+        }
+    }
+
+    //Create final object
+    var finalInput = [];
+    for (var i = 0; i < uniqueKrav.length; i++) {
+        finalInput.push({
+            CMinusOne: "0",
+            CMinusTwo: "0",
+            CMinusZero: "0",
+            Krav: uniqueKrav[i]
+        })
+    }
+
+    var CMinusTwo = "missing";
+    var CMinusOne = "missing";
+    var CMinusZero = "missing";
+
+    if (uniqueDatum[2] != undefined) { CMinusTwo = uniqueDatum[2] }
+    if (uniqueDatum[1] != undefined) { CMinusOne = uniqueDatum[1] }
+    if (uniqueDatum[0] != undefined) { CMinusZero = uniqueDatum[0] }
+
+
+    // Update finalInput
+
+    for (var i = 0; i < data.length; i++) {
+        for (var j = 0; j < finalInput.length; j++) {
+
+            if (finalInput[j].Krav == data[i].krav) {
+                switch (data[i].datum) {
+                    case CMinusTwo:
+                        finalInput[j].CMinusTwo = data[i].andel.toString();
+                        break;
+                    case CMinusOne:
+                        finalInput[j].CMinusOne = data[i].andel.toString();
+                        break;
+                    case CMinusZero:
+                        finalInput[j].CMinusZero = data[i].andel.toString();
+                        break;
+                }
+            }
+        }
+    }
+    return finalInput;
+}
+
+function MedlemTabellData(data) {
+    //preuzmi jedinstvene varijable za krav i datum
+    var lookup = {};
+    var items = data;
+    var uniqueKrav = [];
+    var uniqueTaxinr = [];
+    for (var item, i = 0; item = items[i++];) {
+        var krav = item.krav;
+        var taxinr = item.taxinr;
+
+        if (!(krav in lookup)) {
+            lookup[krav] = 1;
+            uniqueKrav.push(krav);
+        }
+
+        if (!(taxinr in lookup)) {
+            lookup[taxinr] = 1;
+            uniqueTaxinr.push(taxinr);
+        }
+    }
+
+    //Create final object
+    var finalInput = [];
+    for (var i = 0; i < uniqueKrav.length; i++) {
+        finalInput.push({
+            Krav: uniqueKrav[i]
+        })
+
+        for (var j = 0; j < uniqueTaxinr.length; j++){
+            finalInput[i][uniqueTaxinr[j]] = "";
+        }
+    }
+
+    // Update finalInput
+    for (var i = 0; i < data.length; i++) {
+        for (var j = 0; j < finalInput.length; j++) {
+            //Check if Krav is matching
+            if (finalInput[j].Krav == data[i].krav) {
+                finalInput[j][data[i].taxinr] = data[i].status.toString();
+            }
+        }
+    }
+    return finalInput;
+}
+
+function MedlemTabellColumns(data, medlem) {
+    var keys = [];
+    for (var k in data) keys.push(k);
+    
+    var fullMedlem = "Medlem: " + medlem;
+
+    console.log(medlem)
+    var returnColumns = [
+        { id: "Krav", header: fullMedlem , width: 200 }
+    ]
+
+    for (var i = 0; i < keys.length; i++) {
+        if (keys[i] != "Krav") {
+            returnColumns.push({
+                id: keys[i],
+                header: keys[i],
+                width:100
+            })
+        }
+    }
+
+    returnColumns.push({
+        id: "empty",
+        header: "",
+        fillspace: true
+    })
+    return returnColumns;
+}
+
+function PrintToPdf() {
+    webix.toPDF($$('medlemDatatable'));
+}
+
 function SendMainForgetPassword() {
+    webix.message("Doradi SendMainForgetPassword funkciju");
+    return;
     var frUN = $$("frUN").getValue();
     $$("btn_SendMainForgetPass").disable();
     if (frUN.search("@gmail.com") > 0) {
@@ -1023,14 +1565,10 @@ function SendMainForgetPassword() {
         })
     } else {
         $$("lbl_msg_reg").setValue("Recovery email not sent! Please check your email address and try again!");
-
-
-
-
     }
 }
 
-function CodeString(value) {
-    return value.replace("'", "@_@")
+function SendMainChangePassword() {
+    webix.message("Doradi SendMainChangePassword funkciju");
+    return;
 }
-
