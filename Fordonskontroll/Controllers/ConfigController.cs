@@ -321,6 +321,71 @@ namespace Source.Controllers
             return true;
         }
 
+        [Route("deluser")]
+        [System.Web.Http.HttpPost]
+        public int DelUsr([FromBody] UserDel uDel)
+        {
+
+            //uDel je objekat koji nosi user email i sifru. Provjeri u proceduri jel dobro
+            //i izbrisi ako jeste
+            string userEmail = "empty";
+            int UserCount = 0;
+            //Connect and retrieve data
+            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(CS))
+            {
+                SqlCommand cmd = new SqlCommand("select * from del_Users where del_ID=" + uDel.User, con);
+                con.Open();
+                SqlDataReader rdr = cmd.ExecuteReader();
+                while (rdr.Read())
+                {
+                    userEmail = rdr["del_User"].ToString();
+                }
+                con.Close();
+            }
+
+            StringBuilder gpReal = new StringBuilder();
+            gpReal.Append(userEmail);
+            gpReal.Append(uDel.pass);
+            gpReal.Append(uDel.pass);
+
+            //Create pass that will be stored in the database
+            string passForDB;
+            using (MD5 md5HashReal = MD5.Create())
+            {
+                passForDB = GetMd5Hash(md5HashReal, gpReal.ToString());
+            }
+
+
+            using (SqlConnection conB = new SqlConnection(CS))
+            {
+                SqlCommand cmdB = new SqlCommand("select count(*) as UserCount from del_Users where del_ID=" + uDel.User + " and del_Pass = '" + passForDB + "'", conB);
+                conB.Open();
+                SqlDataReader rdr = cmdB.ExecuteReader();
+                while (rdr.Read())
+                {
+                    UserCount = Convert.ToInt32(rdr["UserCount"]);
+                }
+                conB.Close();
+            }
+
+
+            if (UserCount == 1)
+            {
+                using (SqlConnection conA = new SqlConnection(CS))
+                {
+                    SqlCommand cmdA = new SqlCommand("delete from del_Users where del_User = @del_User", conA);
+                    SqlParameter paramA = new SqlParameter("@del_User", uDel.idCall);
+                    cmdA.Parameters.Add(paramA);
+                    conA.Open();
+                    SqlDataReader rdr = cmdA.ExecuteReader();
+                }
+            }
+            return 0;
+        }
+
+
+
         
 
 
@@ -340,7 +405,7 @@ namespace Source.Controllers
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
                 using (SqlConnection con = new SqlConnection(CS))
                 {
-                    SqlCommand cmd = new SqlCommand("select * from Kontrolldatum where Kontrolltyp <> 3", con);
+                    SqlCommand cmd = new SqlCommand("select *,case when (select top 1 KontrollID from KontrollTabell where Kontrolldatum = Kontrolldatum.id) is null then 1 else 0 end as del from Kontrolldatum where Kontrolltyp <> 3", con);
                     con.Open();
                     SqlDataReader rdr = cmd.ExecuteReader();
                     while (rdr.Read())
@@ -350,6 +415,7 @@ namespace Source.Controllers
                         fc.Typ = rdr["Kontrolltyp"].ToString();
                         fc.From = Convert.ToDateTime(rdr["FromDate"]);
                         fc.To = Convert.ToDateTime(rdr["ToDate"]);
+                        fc.Del = Convert.ToInt32(rdr["del"]);
                         fcList.Add(fc);
                     }
                 }
@@ -436,6 +502,26 @@ namespace Source.Controllers
             }
         }
 
+
+        [Route("DelCon")]
+        [System.Web.Http.HttpPost]
+        public int DelKon([FromBody] UserRowLogId urlID)
+        {
+            if (Login.CheckLogging(urlID.User))
+            {
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
+                {
+                    string selectQuarry = "DELETE FROM Kontrolldatum WHERE id = " + urlID.idCall;
+                    SqlCommand cmd = new SqlCommand(selectQuarry, con);
+                    con.Open();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    con.Close();
+                }
+            }
+            return 0;
+        }
+        
         /*
          * Classes needed for listing and data processing
          */
@@ -467,11 +553,23 @@ namespace Source.Controllers
             public DateTime To { get; set; }
             public bool Check { get; set; }
             public string User { get; set; }
-
+            public int Del { get; set; }
         }
         public class UserRowLog
         {
             public string User { get; set; }
+        }
+        public class UserRowLogId
+        {
+            public string User { get; set; }
+            public string idCall { get; set; }
+        }
+
+        public class UserDel
+        {
+            public string User { get; set; }
+            public string idCall { get; set; }
+            public string pass { get; set; }
         }
         /*
          * Methods
@@ -525,7 +623,7 @@ namespace Source.Controllers
 
 
             //Check if all values are populated correctly
-            if (ut.Level != "Standard" && ut.Level != "Special" && ut.Level != "Administrator")
+            if (ut.Level != "User" && ut.Level != "Superuser" && ut.Level != "Administrator")
             {
                 ut.Check = false;
             }

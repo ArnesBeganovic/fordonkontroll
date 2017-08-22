@@ -53,12 +53,12 @@ namespace Fordonskontroll.Controllers
                 while (rdr.Read())
                 {
                     string Level = rdr["del_Level"].ToString();
-                    if (Level == "Standard")
+                    if (Level == "User")
                     {
-                        logType = LoginType.Standard;
-                    } else if (Level == "Special")
+                        logType = LoginType.User;
+                    } else if (Level == "Superuser")
                     {
-                        logType = LoginType.Special;
+                        logType = LoginType.Superuser;
                     } else if (Level == "Administrator")
                     {
                         logType = LoginType.Administrator;
@@ -92,13 +92,13 @@ namespace Fordonskontroll.Controllers
                     //Check if sesstion is OK
                     if(GetLogginType(lt.lt))
                     {
-                        if (Level == "Standard")
+                        if (Level == "User")
                         {
-                            logType = LoginType.Standard;
+                            logType = LoginType.User;
                         }
-                        else if (Level == "Special")
+                        else if (Level == "Superuser")
                         {
-                            logType = LoginType.Special;
+                            logType = LoginType.Superuser;
                         }
                         else if (Level == "Administrator")
                         {
@@ -178,8 +178,8 @@ namespace Fordonskontroll.Controllers
     public enum LoginType
     {
         NotLogged,
-        Standard,
-        Special,
+        User,
+        Superuser,
         Administrator
     }
     public class ReturnLoggin {

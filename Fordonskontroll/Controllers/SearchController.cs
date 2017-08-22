@@ -146,6 +146,9 @@ namespace Source.Controllers
                     SqlParameter param5 = new SqlParameter("@Medlem", ksr.medlem);
                     cmd.Parameters.Add(param5);
 
+                    SqlParameter param6 = new SqlParameter("@UserId", ksr.user);
+                    cmd.Parameters.Add(param6);
+
                     con.Open();
                     cmd.ExecuteNonQuery();
                     return GetMaxSession();

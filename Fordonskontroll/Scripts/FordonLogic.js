@@ -7,7 +7,7 @@ var DashboardTemplate = {
     tabbar: { optionWidth: 200 },
     cells: [
         {
-            header: "Current status",
+            header: "Aktuell status",
             body: {
                 view: "scrollview",
                 id: "scrollviewLatest",
@@ -20,7 +20,7 @@ var DashboardTemplate = {
                             type: "stackedBar",
                             barWidth: 60,
                             padding: { bottom: 100 },
-                            height:450,
+                            height: 450,
                             xAxis: {
                                 template: "<div class='rotated'>#krav#</div>"
                             },
@@ -69,7 +69,7 @@ var DashboardTemplate = {
             }
         },
         {
-            header: "Latest Controll",
+            header: "Tidigare kontroller",
             body: {
                 view: "scrollview",
                 id: "scrollview",
@@ -82,7 +82,7 @@ var DashboardTemplate = {
                             type: "bar",
                             barWidth: 20,
                             radius: 2,
-                            height:400,
+                            height: 400,
                             gradient: "rising",
                             padding: { bottom: 100 },
                             xAxis: {
@@ -94,7 +94,7 @@ var DashboardTemplate = {
                                 end: 100
                             },
                             legend: {
-                                values: [{ text: "Controll -2", color: "#58dccd" }, { text: "Controll - 1", color: "#a7ee70" }, { text: "Controll", color: "#36abee" }],
+                                values: [{ text: "Senaste -2", color: "#58dccd" }, { text: "Senaste -1", color: "#a7ee70" }, { text: "Senaste", color: "#36abee" }],
                                 valign: "middle",
                                 align: "right",
                                 width: 90,
@@ -127,7 +127,25 @@ var DashboardTemplate = {
                         },
                         {
                             cols: [
-                                { template:"<div style='width:100%;text-align:center'>Efterkontroll</div>", height:40},
+                                { template: "<div style='width:100%;text-align:center'>Efterkontroll</div>", height: 40 },
+                                {
+                                    view: "richselect",
+                                    id: "ControlSelectorEftNar",
+                                    label: "Kontrolldatum",
+                                    labelWidth: 150,
+                                    value: 1, options: [],
+                                    width: 400,
+                                    on: {
+                                        "onChange": function (newValue, oldValue) {
+                                            console.log("newValue " + newValue);
+                                            console.log("oldValue " + oldValue);
+                                            if (newValue != 1555555) {
+                                                UpdatePieChartNarvaro(newValue);
+                                                UpdatePieChartEfterkontroll(newValue);
+                                            }
+                                        }
+                                    }
+                                },
                                 { template: "<div style='width:100%;text-align:center'>Närvaro</div>", height: 40 }
                             ]
                         },
@@ -160,33 +178,30 @@ var DashboardTemplate = {
                                 }
                             ]
                         },
-                        {template:"",height:100}
+                        { template: "", height: 100 }
                     ]
                 }
             }
-            
+
         },
         {
-            header: "Medlem",
+            header: "Medlemmar",
             id: "medlemTab",
             rows: [
                 {
-                    height:40,
+                    height: 40,
                     cols: [
                         {
                             view: "richselect",
-                            id:"ControlSelector",
-                            label: "Kontroll",
-                            value: 1, options: [
-                                { "id": 1, "value": "Select" },
-                                { "id": 2, "value": "Papaya" },
-                                { "id": 3, "value": "Apple" }
-                            ]
+                            id: "ControlSelector",
+                            label: "Kontrolldatum",
+                            labelWidth: 150,
+                            value: 1, options: []
                         },
-                        { view: "text", placeholder: 'Medlem...', id: "MedlemSearch", width: 100 },
-                        { view: "button", value: "Search", width: 100, click: "GetMedlemDashboard()" },
+                        { view: "text", placeholder: 'Ange medlemsnr', id: "MedlemSearch", width: 200 },
+                        { view: "button", value: "Sök", width: 100, click: "GetMedlemDashboard()" },
                         {},
-                        { view: "button", value: "Export To PDF", width: 100, click: "PrintToPdf()" },
+                        { view: "button", value: "Till PDF", width: 100, click: "PrintToPdf()" },
                     ]
                 },
                 {
@@ -201,10 +216,10 @@ var DashboardTemplate = {
                                     id: "medlemDatatable",
                                     columns: [
                                         { id: "krav", header: "", width: 200 },
-                                        { id: "empty", header: "", fillspace: true}
+                                        { id: "empty", header: "", fillspace: true }
                                     ],
                                     data: [
-                                        { krav: ""}
+                                        { krav: "" }
                                     ]
                                 }
                             ]
@@ -217,13 +232,17 @@ var DashboardTemplate = {
     ]
 }
 
+//Da budem siguran da je klik dosao iz skripte. Posto kreiram delete button preko templejta funkcija je izlozena
+//napadu pa cu to sprijeciti ovom varijablom.
+var DelPlanCon = [];
+var DelUsr = 0;
 
 var SearchTemplate = {
     rows: [
         {
             cols: [
                 {},
-                { view: "button", value: "Save", id: "SaveControll", width: 100, disabled: true, click: "SaveControll()" }
+                { view: "button", value: "Spara", id: "SaveControll", width: 100, disabled: true, click: "SaveControll()" }
             ]
         },
         {
@@ -249,7 +268,7 @@ var SearchTemplate = {
                             id: "FordonConstollsData",
                             header: true,
                             columns: [
-                                { id: "D", fillspace: true, header: "Tidigare Kontroller", template: "<a href='#' onClick='CallGetControl(#S#)'>#D#</a>", }
+                                { id: "D", fillspace: true, header: "Tidigare kontroller", template: "<a href='#' onClick='CallGetControl(#S#)'>#D#</a>", }
                             ],
                             select: "row",
                             data: [],
@@ -298,59 +317,60 @@ var SearchTemplate = {
 
 var KonfKrav = {
     rows: [
+        {
+            cols: [
+                {},
                 {
-                    cols: [
-                    {},
-                    {
-                        view: "button",
-                        width: 150,
-                        type: "icon",
-                        icon: "plus",
-                        label: "Add New",
-                        click: "ShowKravWindow('NEW')",
-                        id: "AddNewKrav"
-                    }
-                    ]
+                    view: "button",
+                    width: 150,
+                    type: "icon",
+                    icon: "plus",
+                    label: "Lägg till",
+                    click: "ShowKravWindow('NEW')",
+                    id: "AddNewKrav"
+                }
+            ]
 
+        },
+        {
+            view: "datatable",
+            id: "KravTableListConfig",
+            columns: [
+                { id: "krav", width: 300, header: "Krav" },
+                {
+                    id: "status", width: 100, header: "Status", template: function (ulaz) {
+                        if (ulaz.status == 1) {
+                            return "Aktivt";
+                        } else {
+                            return "Inaktivt";
+                        }
+                    }
                 },
-    {
-        view: "datatable",
-        id: "KravTableListConfig",
-        columns: [
-            { id: "krav", width: 300, header: "Krav" },
-            {
-                id: "status", width: 100, header: "Status", template: function (ulaz) {
-                    if (ulaz.status == 1) {
-                        return "Enabled";
-                    } else {
-                        return "Disabled";
+                {
+                    id: "efterkontroll", width: 200, header: "Efterkontroll", template: function (ulaz) {
+                        if (ulaz.efterkontroll == 1) { return "Ingen" }
+                        else if (ulaz.efterkontroll == 2) { return "Snarast" }
+                        else if (ulaz.efterkontroll == 3) { return "Inom kort" }
+                    }
+                },
+                {
+                    id: "exkluderadeBilar", fillspace: true, header: "Exkluderade bilar", template: function (ulaz) {
+                        if (ulaz.exkluderadeBilar == 1) { return "Inga" }
+                        else if (ulaz.exkluderadeBilar == 2) { return "Storbilar" }
+                        else if (ulaz.exkluderadeBilar == 3) { return "Executive" }
+                        else if (ulaz.exkluderadeBilar == 4) { return "Bilar utan centralen transponder" }
+                        else if (ulaz.exkluderadeBilar == 5) { return "Bilar utan OTT-kategori" }
                     }
                 }
-            },
-            {
-                id: "efterkontroll", width: 200, header: "Efterkontroll", template: function (ulaz) {
-                    if (ulaz.efterkontroll == 1) { return "Ingen" }
-                    else if (ulaz.efterkontroll == 2) { return "Snarast" }
-                    else if (ulaz.efterkontroll == 3) { return "Inom kort" }
+            ],
+            select: "row",
+            data: [],
+            on: {
+                "onItemDblClick": function (id) {
+                    ShowKravWindow(id.row);
                 }
-            },
-            {
-                id: "exkluderadeBilar", fillspace: true, header: "Exkluderade Bilar", template: function (ulaz) {
-                    if (ulaz.exkluderadeBilar == 1) { return "Inga" }
-                    else if (ulaz.exkluderadeBilar == 2) { return "Storbilar" }
-                    else if (ulaz.exkluderadeBilar == 3) { return "Executive" }
-                    else if (ulaz.exkluderadeBilar == 4) { return "Bilar utan centralen transponder" }
-                    else if (ulaz.exkluderadeBilar == 5) { return "Bilar utan OTT-kategori" }
-                } }
-        ],
-        select: "row",
-        data: [],
-        on: {
-            "onItemDblClick": function (id) {
-                ShowKravWindow(id.row);
             }
         }
-    }
     ]
 }
 
@@ -364,7 +384,7 @@ var KonfAnv = {
                     width: 150,
                     type: "icon",
                     icon: "plus",
-                    label: "Add New",
+                    label: "Lägg till",
                     click: "ShowUserWindow('NEW')",
                     id: "AddNewUser"
                 }
@@ -375,8 +395,13 @@ var KonfAnv = {
             height: 500,
             id: "UserTableListConfig",
             columns: [
-                { id: "user", width: 300, header: "Email" },
-                { id: "level", fillspace: true, header: "Status" }
+                { id: "user", width: 300, header: "E-post" },
+                { id: "level", fillspace: true, header: "Behörighet" },
+                {
+                    id: "delusrID", width:50, header: "", template: function (ulaz) {
+                        return "<span class='webix_icon fa-trash-o' onclick='DelUsrFun("+ ulaz.id +")'></span>"
+                    }
+                }
             ],
             select: "row",
             data: [],
@@ -399,7 +424,7 @@ var KonfFord = {
                     width: 150,
                     type: "icon",
                     icon: "plus",
-                    label: "Add New",
+                    label: "Lägg till",
                     click: "ShowFordonControllWindow('NEW')",
                     id: "AddNewFordonControll"
                 }
@@ -422,13 +447,22 @@ var KonfFord = {
                     }
                 },
                 {
-                    id: "from", width: 100, header: "From", template: function (ulaz) {
+                    id: "from", width: 100, header: "Från", template: function (ulaz) {
                         return ulaz.from.toString().substr(0, 10)
                     }
                 },
                 {
-                    id: "to", width: 100, header: "To", template: function (ulaz) {
+                    id: "to", width: 100, header: "Till", template: function (ulaz) {
                         return ulaz.to.toString().substr(0, 10)
+                    }
+                },
+                {
+                    id: "del", width: 40, header: "", template: function (ulaz) {
+                        if (ulaz.del == 1) {
+                            return "<span class='webix_icon fa-trash-o' onclick='DelPlanConFun(" + ulaz.id + ")' ></span>"
+                        } else {
+                            return ""
+                        }
                     }
                 }
             ],
@@ -436,7 +470,9 @@ var KonfFord = {
             data: [],
             on: {
                 "onItemDblClick": function (id) {
-                    ShowFordonControllWindow(id.row);
+                    if (id.column != "del") {
+                        ShowFordonControllWindow(id.row);
+                    }
                 }
             }
         }
@@ -446,11 +482,11 @@ var KonfFord = {
 var ConfigurationTemplate = {
     id: "KonfScreen",
     visibleBatch: "Krav",
-    height:500,
+    height: 500,
     rows: [
-            { rows: [{ animate: false, cells: [KonfKrav] }], batch: "Krav" },
-            { rows: [{ animate: false, cells: [KonfAnv] }], batch: "Anvandare" },
-            { rows: [{ animate: false, cells: [KonfFord] }], batch: "Fordonskontroll" }
+        { rows: [{ animate: false, cells: [KonfKrav] }], batch: "Krav" },
+        { rows: [{ animate: false, cells: [KonfAnv] }], batch: "Anvandare" },
+        { rows: [{ animate: false, cells: [KonfFord] }], batch: "Fordonskontroll" }
     ]
 }
 
@@ -458,41 +494,44 @@ var TemplateController = {
     id: "MainScreen",
     visibleBatch: "search",
     rows: [
-            { rows: [{ animate: false, cells: [DashboardTemplate] }], batch: "dash" },
-            { rows: [{ animate: false, cells: [SearchTemplate] }], batch: "search" },
-            { rows: [{ animate: false, cells: [ConfigurationTemplate] }], batch: "konfig" },
+        { rows: [{ animate: false, cells: [DashboardTemplate] }], batch: "dash" },
+        { rows: [{ animate: false, cells: [SearchTemplate] }], batch: "search" },
+        { rows: [{ animate: false, cells: [ConfigurationTemplate] }], batch: "konfig" },
     ]
 };
 
 var LoginTemplate = {
     user: "",
     rows: [
-        { template: "<div class='container'><img style='padding-left:21px' src=../img/taxigbglogo.png><div>", height: 100 },
+        {
+            template: "<img style='height: 95px;width:70px' src=../img/Taxi-Goteborg-Logo-2015.png>", height: 100
+
+        },
         {
             cols: [
                 {},
-                
-            {
-                view: "form",
-                id: "LoginForm",
-                scroll: false,
-                width: 500,
-                elements: [
-                    { view: "text", id: "un", value: '', labelWidth: 150, label: "User Name" },
-                    { view: "text", type: "password", id: "pass", value: '', labelWidth: 150, label: "Password" },
-                    {
-                        cols: [
-                          { template: "", width: 150 },
-                          {},
-                          { view: "button", value: "Log In", type: "form", click: "Login()" },
-                          {}
-                        ]
-                    },
-                    { view: "label", label: "<a target='_self' href='#' onClick='ForgetPassword()'>Forget Password</a>" },
-                    { view: "label", label: "", id: "lbl_msg_gen" }
-                ]
-            },
-            {}
+
+                {
+                    view: "form",
+                    id: "LoginForm",
+                    scroll: false,
+                    width: 500,
+                    elements: [
+                        { view: "text", id: "un", value: '', labelWidth: 150, label: "E-postadress" },
+                        { view: "text", type: "password", id: "pass", value: '', labelWidth: 150, label: "Lösenord" },
+                        {
+                            cols: [
+                                { template: "", width: 150 },
+                                {},
+                                { view: "button", value: "Logga in", type: "form", click: "Login()" },
+                                {}
+                            ]
+                        },
+                        { view: "label", label: "<a target='_self' href='#' onClick='ForgetPassword()'>Glömt lösenordet?</a>" },
+                        { view: "label", label: "", id: "lbl_msg_gen" }
+                    ]
+                },
+                {}
             ]
 
         },
@@ -506,46 +545,58 @@ var LoggedTemplate = {
      * with Admin rights
      */
     rows: [
-        { template: "<div class='container'><img style='padding-left:21px' src=../img/taxigbglogo.png><div>", height: 100 },
-            {
-                view: "toolbar",
-                css: "row",
-                cols: [
-                    {
-                        view: "button", id: "DashboradView", width: 150, label: "Dashboard", click: "GetDashboard()",hidden:true,
-                    },
-                    {},
-                    { view: "text", placeholder: 'Search TaxiNr...', id: "SearchBox", width: 200 },
-                    { view: "button", value: "Search", width: 100, click: "GetFordonData()" },
-
-                    {},
-                    {
-                        view: "menu", id: "ConfigButton", width: 100, hidden: true, height: 29,
-                        data: [
-                            {
-                                id: "KonfigureraMenu", value: "Konfigurera",
-                                config: {
-                                    width: 200,
-                                    
-                                    on: {
-                                        onItemClick: function (id) {
-                                            ShowConfig(id);
-                                        }
-                                    }
-                                },
-                                submenu: [
-                                    { id: "KonfigureraKrav", value: "Krav"},
-                                    { id: "KonfigureraAnvandare", value: "Användare" },
-                                    { id: "KonfigureraFordonskontroll", value: "Fordonskontroll" },
-                                    { id: "ChangePassword", value: "Ändra lösenordet" },
-                                    { id: "Logout", value: "Log Out" }
-                                ]
+        {
+            template: "<img style='height: 95px;width:70px' src=../img/Taxi-Goteborg-Logo-2015.png>", height: 100
+        },
+        {
+            view: "toolbar",
+            css: "row",
+            cols: [
+                {
+                    view: "button", id: "DashboradView", width: 100, label: "Dashboard", click: "GetDashboard()", hidden: true,
+                },
+                {},
+                {
+                    view: "text", placeholder: 'Search TaxiNr...', id: "SearchBox", width: 200,
+                    on: {
+                        "onKeyPress": function (code, e) {
+                            if (code == 13) {
+                                GetFordonData();
                             }
-                        ]
+                        }
                     }
-                ]
-            },
-            TemplateController
+                },
+
+                { view: "button", value: "Sök", width: 100, click: "GetFordonData()" },
+
+                {},
+                {
+                    view: "menu", id: "ConfigButton", width: 100, hidden: true, height: 29,
+                    data: [
+                        {
+                            id: "KonfigureraMenu", value: "Inställningar",
+                            config: {
+                                width: 200,
+
+                                on: {
+                                    onItemClick: function (id) {
+                                        ShowConfig(id);
+                                    }
+                                }
+                            },
+                            submenu: [
+                                { id: "KonfigureraKrav", value: "Krav" },
+                                { id: "KonfigureraAnvandare", value: "Användare" },
+                                { id: "KonfigureraFordonskontroll", value: "Fordonskontroll" },
+                                { id: "ChangePassword", value: "Ändra lösenord" }
+                            ]
+                        }
+                    ]
+                },
+                { view: "button", value: "Logga ut", width:100,click: "Logout()" },
+            ]
+        },
+        TemplateController
 
     ]
 }
@@ -553,10 +604,10 @@ var LoggedTemplate = {
 var ViewController = {
     id: "ViewScreen",
     visibleBatch: "login",
-    type:"space",
+    type: "space",
     rows: [
-            { rows: [{ animate: false, cells: [LoginTemplate] }], batch: "login" },
-            { rows: [{ animate: false, cells: [LoggedTemplate] }], batch: "logged" }
+        { rows: [{ animate: false, cells: [LoginTemplate] }], batch: "login" },
+        { rows: [{ animate: false, cells: [LoggedTemplate] }], batch: "logged" }
     ]
 };
 
@@ -674,50 +725,11 @@ function GetDashboard() {
     })
 
     //Get Piechart data for efterkontroll
-    jQuery.ajax({
-        url: 'api/dashboard/Efterkontroll/',
-        type: 'POST',
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        data: JSON.stringify({
-            User: window.activeUser
-        }),
-        //If success update webix. Data is Krav ID from database that was updated or created
-        success: function (data) {
-            var ekData = [
-                { andel: data[0].ingen, efterKontrolTyp: "Ingen", color: "#ee3639" },
-                { andel: data[0].senare, efterKontrolTyp: "Senare", color: "#ee9e36" },
-                { andel: data[0].snarast, efterKontrolTyp: "Snarast", color: "#eeea36" }
-            ];
-            $$("efterkontroll").clearAll();
-            $$("efterkontroll").parse(ekData);
-            $$("efterkontroll").refresh();
-        }
-    })
-   
+    UpdatePieChartEfterkontroll(0);
+
     //Get Piechart data for Narvaro
-    jQuery.ajax({
-        url: 'api/dashboard/Narvaro/',
-        type: 'POST',
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        data: JSON.stringify({
-            User: window.activeUser
-        }),
-        //If success update webix. Data is Krav ID from database that was updated or created
-        success: function (data) {
-            /* RESULT
-            var narvaroData = [
-                { andel: "20", narvaroTyp: "EJ OK", color: "#ee9e36" },
-                { andel: "80", narvaroTyp: "OK", color: "#86EF36" }
-            ];
-            */
-            $$("narvaro").clearAll();
-            $$("narvaro").parse(data);
-            $$("narvaro").refresh();
-            
-        }
-    })
+    UpdatePieChartNarvaro(0);
+    
 
     //Get Controll List for Medlemmar tab
     jQuery.ajax({
@@ -731,19 +743,26 @@ function GetDashboard() {
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
 
-            var trData = [{ id: "1555555", value: "Select" }]
+            var trData = [{ id: "1555555", value: "Välj" }]
 
             for (i = 0; i < data.length; i++) {
                 trData.push({
                     id: data[i].id,
-                    value:data[i].value
+                    value: data[i].value
                 })
             }
             $$("ControlSelector").getPopup().getList().clearAll();
             $$("ControlSelector").getPopup().getList().parse(trData);
             $$("ControlSelector").refresh();
-            $$("ControlSelector").setValue(0);
+            $$("ControlSelector").setValue(1555555);
             $$("ControlSelector").refresh();
+
+            $$("ControlSelectorEftNar").getPopup().getList().clearAll();
+            $$("ControlSelectorEftNar").getPopup().getList().parse(trData);
+            $$("ControlSelectorEftNar").refresh();
+            $$("ControlSelectorEftNar").setValue(1555555);
+            $$("ControlSelectorEftNar").refresh();
+
         }
     })
 }
@@ -811,6 +830,7 @@ function GetFC() {
         success: function (data) {
             $$("FordonControllTableListConfig").clearAll();
             $$("FordonControllTableListConfig").parse(data);
+            DelPlanCon = data;
             $$("loadtextwin").hide();
         }
     })
@@ -834,11 +854,11 @@ function GetFordonData() {
         $$("FordonConstollsData").clearAll();
 
         //Populate data in all tables
-        GetControl($$("SearchBox").getValue(),"New"); //Controll details. Latest by default.
+        GetControl($$("SearchBox").getValue(), "New"); //Controll details. Latest by default.
     } else {
         //Inform user to enter TaxiNr
-        $$("loadextwin").hide();
-        webix.message({ type: "error", text: "Please enter correct TaxiNr!" })
+        $$("loadtextwin").hide();
+        webix.message({ type: "error", text: "Ange ett giltigt taxinr!" })
     }
 }
 
@@ -872,7 +892,7 @@ function CallGetControl(ControlId) {
     GetControl($$("SearchBox").getValue(), ControlId);
 }
 
-function GetControl(taxiNr,ControlId) {
+function GetControl(taxiNr, ControlId) {
     /*
      * Retrieves JSON object and populates KravData table.
      */
@@ -884,11 +904,23 @@ function GetControl(taxiNr,ControlId) {
         data: JSON.stringify({
             idc: ControlId,
             idt: taxiNr,
-            user:window.activeUser
+            user: window.activeUser
         }),
         dataType: 'json',
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
+            if (data.length == 0) {
+                data.push({
+                    arsmodell: "",
+                    fabrikat: "TaxiNr Saknas",
+                    id: 1,
+                    krav: "",
+                    medlem: 0,
+                    regNr: "",
+                    status: 0,
+                    taxiNr: ""
+                })
+            }
             $$("KravData").clearAll();
             $$("KravData").parse(data);
             $$("SaveControll").enable();
@@ -896,9 +928,13 @@ function GetControl(taxiNr,ControlId) {
             CallPopulateConstollsData(data[0].regNr, data[0].taxiNr, data[0].medlem);
             ArnApp.each($$("FordonHeaderData").data.pull, function (index, value) {
                 if (value.DataCol == "Missing") {
-                   $$("SaveControll").disable();
+                    $$("SaveControll").disable();
                 }
             })
+
+            if (data[0].fabrikat == "TaxiNr Saknas") {
+                $$("SaveControll").disable();
+            }
             $$("loadtextwin").hide();
 
         }
@@ -906,11 +942,13 @@ function GetControl(taxiNr,ControlId) {
 }
 
 function GetMedlemDashboard() {
+    $$("loadtextwin").show();
     var plControll = $$("ControlSelector").getValue();
     var selMedlem = $$("MedlemSearch").getValue();
 
-    if (plControll == 1555555 || plControll.length==0 || selMedlem.length != 5) {
-        webix.message({ type: "error", text: "Select Controll and type correct Medlem nr!!!" });
+    if (plControll == 1555555 || plControll.length == 0 || selMedlem.length != 5) {
+        webix.message({ type: "error", text: "Välj kontrolldatum och ange ett giltigt medlemsnr!" });
+        $$("loadtextwin").hide();
         return;
     }
     //Get data for Medlem table
@@ -922,13 +960,13 @@ function GetMedlemDashboard() {
         data: JSON.stringify({
             User: window.activeUser,
             Controll: plControll,
-            Medlem:selMedlem
+            Medlem: selMedlem
         }),
 
         success: function (data) {
 
             var transformedData = MedlemTabellData(data);
-            var transformedColumns = MedlemTabellColumns(transformedData[0],data[0].medlem);
+            var transformedColumns = MedlemTabellColumns(transformedData[0], data[0].medlem);
 
 
             $$("medlemDatatable").config.columns = transformedColumns;
@@ -936,6 +974,7 @@ function GetMedlemDashboard() {
             $$("medlemDatatable").clearAll();
             $$("medlemDatatable").parse(transformedData);
             $$("medlemDatatable").refresh();
+            $$("loadtextwin").hide();
         }
     })
 }
@@ -996,10 +1035,10 @@ function SaveControll() {
             success: function (data) {
                 if (data == 0) {
                     //nije snimio
-                    webix.message({ type: "error", message: "Controll not saved!!!" })
+                    webix.message({ type: "error", message: "Kontrolldata sparades inte!" })
                 } else {
                     //jeste snimio. TBD obavjesti korisnika
-                    webix.message("Controll saved!!!")
+                    webix.message("Kontrolldata sparad!")
                 }
                 CallGetControl(data); //Recalculate all TBD
                 $$("savetextwin").hide();
@@ -1007,10 +1046,10 @@ function SaveControll() {
             }
         })
     } else {
-        webix.message({ type: "error", text: "Please check TaxiNr. It seams Vehicle does not exists in Fordonregister!!! Controll not saved", expire: 5000 })
+        webix.message({ type: "error", text: "Kontrolldata sparades inte. Kontrollera att taxinr existerar i fordonregistret!", expire: 5000 })
         $$("savetextwin").hide();
     }
-    
+
 }
 
 function SaveKrav() {
@@ -1052,7 +1091,7 @@ function SaveKrav() {
                 $$("newKrav").hide();
                 //In case send data is not OK it will return 0
             } else {
-                webix.message({ type: "error", text: "Not Saved!" })
+                webix.message({ type: "error", text: "Kravet sparades inte!" })
             }
         }
     })
@@ -1093,7 +1132,7 @@ function SaveUser() {
                 $$("newUser").hide();
                 //In case send data is not OK it will return 0
             } else {
-                webix.message({ type: "error", text: "Not Saved!" })
+                webix.message({ type: "error", text: "Användaren sparades inte!" })
             }
         }
     })
@@ -1139,7 +1178,7 @@ function SaveFordonControll() {
                 $$("newFordonControll").hide();
                 //In case send data is not OK it will return 0
             } else {
-                webix.message({ type: "error", text: "Not Saved!" })
+                webix.message({ type: "error", text: "Kontrollen sparades inte!" })
             }
         }
     })
@@ -1154,9 +1193,9 @@ function PopulateVehicleData(data) {
     $$("FordonHeaderData").clearAll();
     DatatableData = [];
     DatatableData.push({ HeadCol: "Fabrikat", DataCol: data.fabrikat })
-    DatatableData.push({ HeadCol: "RegNr", DataCol: data.regNr })
-    DatatableData.push({ HeadCol: "Arsmodell", DataCol: data.arsmodell })
-    DatatableData.push({ HeadCol: "TaxiNr", DataCol: data.taxiNr })
+    DatatableData.push({ HeadCol: "Regnr", DataCol: data.regNr })
+    DatatableData.push({ HeadCol: "Årsmodell", DataCol: data.arsmodell })
+    DatatableData.push({ HeadCol: "Taxinr", DataCol: data.taxiNr })
     DatatableData.push({ HeadCol: "Medlem", DataCol: data.medlem })
     $$("FordonHeaderData").parse(DatatableData);
 }
@@ -1216,7 +1255,7 @@ function ShowUserWindow(id) {
     //Set default values
     $$('NewUserForm').config.prenosniID = 0;
     $$("UserA").setValue("");
-    $$("UserB").setValue("Standard");
+    $$("UserB").setValue("User");
 
     //Check if existing selected and set those values if is. It will populate form
     ArnApp.each($$("UserTableListConfig").data.pull, function (index, value) {
@@ -1241,7 +1280,7 @@ function ShowFordonControllWindow(id) {
         if (value.id == id) {
             $$('NewFordonControllForm').config.prenosniID = value.id;
             $$("KontrolGrupp").setValue(value.typ);
-            var dateFrom = value.from.substr(0,10);
+            var dateFrom = value.from.substr(0, 10);
             var dateTo = value.to.substr(0, 10);
 
             $$("KontrollFran").setValue(dateFrom); // POSTAVI CUSTOM KALENDAR VRIJEDNOSTI
@@ -1298,9 +1337,6 @@ function ShowConfig(id) {
         case "ChangePassword":
             ChangePassword();
             break;
-        case "Logout":
-            Logout();
-            break;
     }
 }
 
@@ -1351,10 +1387,10 @@ function Login() {
 
     //Check if data is entered
     if (un.length == 0) {
-        webix.message({ type: "error", text: "Enter user name!" })
+        webix.message({ type: "error", text: "Ange användarnamn!" })
         return;
     } else if (pass.length == 0) {
-        webix.message({ type: "error", text: "Enter Password!" })
+        webix.message({ type: "error", text: "Ange lösenord!" })
         return;
     }
 
@@ -1375,7 +1411,7 @@ function Login() {
             document.cookie = "au=" + dodajA + window.activeUser + dodajB;
             if (data.logType == 0) {
                 //Not logged
-                webix.message({ type: "error", text: "Wrong user name or password!" })
+                webix.message({ type: "error", text: "Fel användarnamn eller lösenord!" })
             } else if (data.logType == 1) {
                 //Standard user - show only search tab
                 $$("ViewScreen").showBatch("logged");
@@ -1392,6 +1428,7 @@ function Login() {
         }
     })
 }
+
 
 
 function CodeString(value) {
@@ -1490,7 +1527,7 @@ function MedlemTabellData(data) {
             Krav: uniqueKrav[i]
         })
 
-        for (var j = 0; j < uniqueTaxinr.length; j++){
+        for (var j = 0; j < uniqueTaxinr.length; j++) {
             finalInput[i][uniqueTaxinr[j]] = "";
         }
     }
@@ -1510,12 +1547,12 @@ function MedlemTabellData(data) {
 function MedlemTabellColumns(data, medlem) {
     var keys = [];
     for (var k in data) keys.push(k);
-    
+
     var fullMedlem = "Medlem: " + medlem;
 
     console.log(medlem)
     var returnColumns = [
-        { id: "Krav", header: fullMedlem , width: 200 }
+        { id: "Krav", header: fullMedlem, width: 200 }
     ]
 
     for (var i = 0; i < keys.length; i++) {
@@ -1523,7 +1560,7 @@ function MedlemTabellColumns(data, medlem) {
             returnColumns.push({
                 id: keys[i],
                 header: keys[i],
-                width:100
+                width: 100
             })
         }
     }
@@ -1552,9 +1589,9 @@ function SendMainForgetPassword() {
             type: "json",
             uspjeh: function (data) {
                 if (data[0].UserName != "0" && data[0].UserName != "NN") {
-                    $$("lbl_msg_reg").setValue("Please check your inbox for Password Recovery details!");
+                    $$("lbl_msg_reg").setValue("Kontrollera din e-post för att återställa lösenordet!");
                 } else {
-                    $$("lbl_msg_reg").setValue("Recovery email not sent! Please check your email address and try again!");
+                    $$("lbl_msg_reg").setValue("Kunde inte skicka återställningsmailet! Kontrollera din e-postadress och försök igen!");
                 }
                 $$("btn_SendMainForgetPass").enable();
             },
@@ -1564,11 +1601,128 @@ function SendMainForgetPassword() {
             }]
         })
     } else {
-        $$("lbl_msg_reg").setValue("Recovery email not sent! Please check your email address and try again!");
+        $$("lbl_msg_reg").setValue("Kunde inte skicka återställningsmailet! Kontrollera din e-postadress och försök igen!!");
     }
 }
 
 function SendMainChangePassword() {
     webix.message("Doradi SendMainChangePassword funkciju");
     return;
+}
+
+function UpdatePieChartNarvaro(idNar) {
+    jQuery.ajax({
+        url: 'api/dashboard/Narvaro/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser,
+            idCall: idNar
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            /* RESULT
+            var narvaroData = [
+                { andel: "20", narvaroTyp: "EJ OK", color: "#ee9e36" },
+                { andel: "80", narvaroTyp: "OK", color: "#86EF36" }
+            ];
+            */
+            $$("narvaro").clearAll();
+            $$("narvaro").parse(data);
+            $$("narvaro").refresh();
+
+        }
+    })
+}
+
+function UpdatePieChartEfterkontroll(idEft) {
+    jQuery.ajax({
+        url: 'api/dashboard/Efterkontroll/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser,
+            idCall: idEft
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            var ekData = [
+                { andel: data[0].ingen, efterKontrolTyp: "Ingen", color: "#ee3639" },
+                { andel: data[0].senare, efterKontrolTyp: "Senare", color: "#ee9e36" },
+                { andel: data[0].snarast, efterKontrolTyp: "Snarast", color: "#eeea36" }
+            ];
+            $$("efterkontroll").clearAll();
+            $$("efterkontroll").parse(ekData);
+            $$("efterkontroll").refresh();
+        }
+    })
+}
+
+function DelPlanConFun(id) {
+    var isThere = false;
+    if (!confirm("Vill du verkligen radera kontroll?")){
+        return;
+    }
+
+    for (var i = 0; i < DelPlanCon.length; i++) {
+        if (DelPlanCon[i].id == id && DelPlanCon[i].del == "1"){
+            isThere = true; 
+        }
+    }
+    if (isThere) {
+        jQuery.ajax({
+            url: 'api/config/DelCon/',
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            data: JSON.stringify({
+                User: window.activeUser,
+                idCall: id
+            }),
+            //If success update webix. Data is Krav ID from database that was updated or created
+            success: function (data) {
+                webix.message("Kontroll raderat!!!");
+                GetFC();
+            }
+        })
+    }
+
+}
+
+function DelUsrFun(id) {
+    var isThere = false;
+    $$("delUsrWind").show();
+
+    var tempVarAA = $$("UserTableListConfig").data.pull;
+
+    ArnApp.each($$("UserTableListConfig").data.pull, function (index, value) {
+        if (value.id == id) {
+            DelUsr = value.user;
+        }
+    })
+}
+
+function DelUsrFunCont() {
+    console.log(DelUsr)
+    if (DelUsr != 0) {
+        jQuery.ajax({
+            url: 'api/config/deluser/',
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            data: JSON.stringify({
+                User: window.activeUser,
+                idCall: DelUsr,
+                pass: $$("lsoDelUsr").getValue()
+            }),
+            //If success update webix. Data is Krav ID from database that was updated or created
+            success: function (data) {
+                GetUser();
+            }
+        })
+    }
+    $$("delUsrWind").hide();
+    DelUsr = 0;
 }

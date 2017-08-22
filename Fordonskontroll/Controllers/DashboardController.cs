@@ -77,7 +77,7 @@ namespace Fordonskontroll.Controllers
 
         [Route("Efterkontroll")]
         [System.Web.Http.HttpPost]
-        public List<Efterkontroll> EKFunc([FromBody] UserControll uc)
+        public List<Efterkontroll> EKFunc([FromBody] UserControllEftNar uc)
         {
             List<Efterkontroll> ekList = new List<Efterkontroll>();
 
@@ -89,6 +89,8 @@ namespace Fordonskontroll.Controllers
                 {
                     SqlCommand cmd = new SqlCommand("Dashboard_Efterkontroll", con);
                     cmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter paramA = new SqlParameter("@KontrollID", uc.idCall);
+                    cmd.Parameters.Add(paramA);
                     con.Open();
                     SqlDataReader rdr = cmd.ExecuteReader();
                     while (rdr.Read())
@@ -107,7 +109,7 @@ namespace Fordonskontroll.Controllers
 
         [Route("Narvaro")]
         [System.Web.Http.HttpPost]
-        public List<Narvaro> NVFunc([FromBody] UserControll uc)
+        public List<Narvaro> NVFunc([FromBody] UserControllEftNar uc)
         {
             List<Narvaro> nvList = new List<Narvaro>();
 
@@ -119,6 +121,8 @@ namespace Fordonskontroll.Controllers
                 {
                     SqlCommand cmd = new SqlCommand("Dashboard_Narvaro", con);
                     cmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter paramA = new SqlParameter("@KontrollID", uc.idCall);
+                    cmd.Parameters.Add(paramA);
                     con.Open();
                     SqlDataReader rdr = cmd.ExecuteReader();
                     while (rdr.Read())
@@ -248,6 +252,12 @@ namespace Fordonskontroll.Controllers
             public int andel { get; set; }
             public string narvaroTyp { get; set; }
             public string color { get; set; }
+        }
+
+        public class UserControllEftNar
+        {
+            public string user { get; set; }
+            public string idCall { get; set; }
         }
     }
 }
