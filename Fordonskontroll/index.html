@@ -1,4 +1,5 @@
 ﻿
+
 <!DOCTYPE html>
 <html>
 <LINK REL="SHORTCUT ICON" HREF="img/favicon.ico">
@@ -56,262 +57,282 @@
 
     <script>
         window.activeUser = "";
-webix.ui({
-	id:"savetextwin",
-	view:"window",
-	responsive:true,
-	position:"center",
-	height:200,
-	width:200,
-	modal:true,
-	head:false,
-	body:"Sparar..."
- }).hide();
+        webix.ui({
+            id: "savetextwin",
+            view: "window",
+            responsive: true,
+            position: "center",
+            height: 200,
+            width: 200,
+            modal: true,
+            head: false,
+            body: "Sparar..."
+        }).hide();
 
- webix.ui({
-	id:"loadtextwin",
-	view:"window",
-	responsive:true,
-	position:"center",
-	height:200,
-	width:200,
-	modal:true,
-	head:false,
-	body:"Laddar..."
- }).hide();
+        webix.ui({
+            id: "loadtextwin",
+            view: "window",
+            responsive: true,
+            position: "center",
+            height: 200,
+            width: 200,
+            modal: true,
+            head: false,
+            body: "Laddar..."
+        }).hide();
 
 
-//New Krav
-webix.ui({
-	id:"newKrav",
-	view:"window",
-	responsive:true,
-	position:"center",
-	height:300,
-	width:500,
-	modal:true,
-	head:{
-		view:"toolbar", cols:[
-			{view:"label", label: "Lägg till krav" },
-			{ view:"button", label: 'Stäng', width: 100, align: 'right', click:"$$('newKrav').hide();"}
-		]
-	},
-	body:{
-		view:"form",
-		scroll:false,
-		id:"NewKravForm",
-		prenosniID:0,
-		width:500,
-		elements: [
-			{ view:"text", id:"KravA", name:"KravA", value:'',labelWidth:150, label:"Krav" },
-			{view:"select",id:"KravB", label:"Status",value:1,labelWidth:150,
-				options:[
-					{ "id":1, "value":"Aktivt" },
-					{ "id":0, "value":"Inaktivt" }
-				]},
-			{view:"select",id:"KravC", label:"Efterkontroll",value:1,labelWidth:150,
-				options:[
-                    { "value": "Ingen", "id":1 },
-                    { "value": "Snarast", "id": 2 },
-                    { "value": "Inom kort", "id": 3 }
-				]},
-			{view:"select",id:"KravD", label:"Exkluderade bilar",value:1,labelWidth:150,
-				options:[
-					{ "value":"Inga", "id":1 },
-                    { "value": "Storbilar", "id":2 },
-                    { "value": "Executive", "id":3 },
-                    { "value": "Bilar utan centralen transponder", "id": 4 },
-                    { "value": "Bilar utan OTT-kategori", "id": 5 }
-				]},
-			{ margin:5, cols:[
-				{ view:"button", id:"saveKravbtn", value:"Spara" , click:function(){
-					var form = this.getParentView().getParentView();
-					if (form.validate())
-						SaveKrav();
-					else
-						webix.message({ type:"error", text:"Krav saknas!" });
-					}
-				},
-				{ view:"button", value:"Avbryt",click:"$$('newKrav').hide();" }
-			]}
-		],
-		rules:{
-				"KravA":CheckKrav
-			}
-	}
- }).hide();
-
-//New User
- webix.ui({
-	id:"newUser",
-	view:"window",
-	responsive:true,
-	position:"center",
-	height:300,
-	width:500,
-	modal:true,
-	head:{
-		view:"toolbar", cols:[
-			{view:"label", label: "Lägg till användare" },
-			{ view:"button", label: 'Stäng', width: 100, align: 'right', click:"$$('newUser').hide();"}
-		]
-	},
-	body:{
-		view:"form",
-		scroll:false,
-		id:"NewUserForm",
-		prenosniID:0,
-		width:500,
-		elements: [
-			{ view:"text", id:"UserA", name:"UserA", value:'',labelWidth:150, label:"E-postadress" },
-			{view:"select",id:"UserB", label:"Behörighet",value:1,labelWidth:150,
-				options:[
-					{ "id":"User", "value":"User" },
-					{ "id":"Superuser", "value":"Superuser" },
-					{ "id":"Administrator", "value":"Administrator" }
-				]},
-			{ margin:5, cols:[
-				{ view:"button", id:"saveUserbtn", value:"Spara" , click:function(){
-					var form = this.getParentView().getParentView();
-					if (form.validate())
-						SaveUser();
-					else
-						webix.message({ type:"error", text:"Ange giltig e-postadress!" });
-					}
-				},
-				{ view:"button", value:"Avbryt",click:"$$('newUser').hide();" }
-			]}
-		],
-		rules:{
-				"UserA":webix.rules.isEmail
-			}
-	}
- }).hide();
-
-//New FordonsControll
- webix.ui({
-	id:"newFordonControll",
-	view:"window",
-	responsive:true,
-	position:"center",
-	height:300,
-	width:500,
-	modal:true,
-	head:{
-		view:"toolbar", cols:[
-			{view:"label", label: "Lägg till kontroll" },
-			{ view:"button", label: 'Stäng', width: 100, align: 'right', click:"$$('newFordonControll').hide();"}
-		]
-	},
-	body:{
-		view:"form",
-		scroll:false,
-		id:"NewFordonControllForm",
-		prenosniID:0,
-		width:500,
-        elements: [
-            {
-                view: "select", id: "KontrolGrupp", label: "Typ", value: 1, labelWidth: 150,
-                options: [
-                    { "id": "1", "value": "Planerad fordonskontroll" },
-                    { "id": "2", "value": "Flygande fordonskontroll" }
+        //New Krav
+        webix.ui({
+            id: "newKrav",
+            view: "window",
+            responsive: true,
+            position: "center",
+            height: 300,
+            width: 500,
+            modal: true,
+            head: {
+                view: "toolbar", cols: [
+                    { view: "label", label: "Lägg till krav" },
+                    { view: "button", label: 'Stäng', width: 100, align: 'right', click: "$$('newKrav').hide();" }
                 ]
             },
-            {
-                view: "datepicker", id: "KontrollFran", align: "right", label: 'Från:', labelWidth: 150, format: "%Y-%m-%d", on: {
-                    "onChange": function (newv) {
-                        $$("KontrollTill").getPopup().getBody().define("minDate", newv);
-                        $$("KontrollTill").refresh();
+            body: {
+                view: "form",
+                scroll: false,
+                id: "NewKravForm",
+                prenosniID: 0,
+                width: 500,
+                elements: [
+                    { view: "text", id: "KravA", name: "KravA", value: '', labelWidth: 150, label: "Krav" },
+                    {
+                        view: "select", id: "KravB", label: "Status", value: 1, labelWidth: 150,
+                        options: [
+                            { "id": 1, "value": "Aktivt" },
+                            { "id": 0, "value": "Inaktivt" }
+                        ]
+                    },
+                    {
+                        view: "select", id: "KravC", label: "Efterkontroll", value: 1, labelWidth: 150,
+                        options: [
+                            { "value": "Ingen", "id": 1 },
+                            { "value": "Snarast", "id": 2 },
+                            { "value": "Inom kort", "id": 3 }
+                        ]
+                    },
+                    {
+                        view: "select", id: "KravD", label: "Exkluderade bilar", value: 1, labelWidth: 150,
+                        options: [
+                            { "value": "Inga", "id": 1 },
+                            { "value": "Storbilar", "id": 2 },
+                            { "value": "Executive", "id": 3 },
+                            { "value": "Bilar utan centralen transponder", "id": 4 },
+                            { "value": "Bilar utan OTT-kategori", "id": 5 }
+                        ]
+                    },
+                    {
+                        margin: 5, cols: [
+                            {
+                                view: "button", id: "saveKravbtn", value: "Spara", click: function () {
+                                    var form = this.getParentView().getParentView();
+                                    if (form.validate())
+                                        SaveKrav();
+                                    else
+                                        webix.message({ type: "error", text: "Krav saknas!" });
+                                }
+                            },
+                            { view: "button", value: "Avbryt", click: "$$('newKrav').hide();" }
+                        ]
                     }
+                ],
+                rules: {
+                    "KravA": CheckKrav
                 }
+            }
+        }).hide();
+
+        //New User
+        webix.ui({
+            id: "newUser",
+            view: "window",
+            responsive: true,
+            position: "center",
+            height: 300,
+            width: 500,
+            modal: true,
+            head: {
+                view: "toolbar", cols: [
+                    { view: "label", label: "Lägg till användare" },
+                    { view: "button", label: 'Stäng', width: 100, align: 'right', click: "$$('newUser').hide();" }
+                ]
             },
-            {
-                view: "datepicker", id: "KontrollTill", align: "right", label: 'Till:', labelWidth: 150, format: "%Y-%m-%d", on: {
-                    "onChange": function (newv) {
-                        $$("KontrollFran").getPopup().getBody().define("maxDate", newv);
-                        $$("KontrollFran").refresh();
+            body: {
+                view: "form",
+                scroll: false,
+                id: "NewUserForm",
+                prenosniID: 0,
+                width: 500,
+                elements: [
+                    { view: "text", id: "UserA", name: "UserA", value: '', labelWidth: 150, label: "E-postadress" },
+                    {
+                        view: "select", id: "UserB", label: "Behörighet", value: 1, labelWidth: 150,
+                        options: [
+                            { "id": "User", "value": "User" },
+                            { "id": "Superuser", "value": "Superuser" },
+                            { "id": "Administrator", "value": "Administrator" }
+                        ]
+                    },
+                    {
+                        margin: 5, cols: [
+                            {
+                                view: "button", id: "saveUserbtn", value: "Spara", click: function () {
+                                    var form = this.getParentView().getParentView();
+                                    if (form.validate())
+                                        SaveUser();
+                                    else
+                                        webix.message({ type: "error", text: "Ange giltig e-postadress!" });
+                                }
+                            },
+                            { view: "button", value: "Avbryt", click: "$$('newUser').hide();" }
+                        ]
                     }
+                ],
+                rules: {
+                    "UserA": webix.rules.isEmail
                 }
+            }
+        }).hide();
+
+        //New FordonsControll
+        webix.ui({
+            id: "newFordonControll",
+            view: "window",
+            responsive: true,
+            position: "center",
+            height: 300,
+            width: 500,
+            modal: true,
+            head: {
+                view: "toolbar", cols: [
+                    { view: "label", label: "Lägg till kontroll" },
+                    { view: "button", label: 'Stäng', width: 100, align: 'right', click: "$$('newFordonControll').hide();" }
+                ]
             },
-			{ margin:5, cols:[
-                {
-                    view: "button", id: "saveFordonControllbtn", value: "Spara", click: function () {
-                        if ($$("KontrollFran").getValue() && $$("KontrollTill").getValue()) {
-                            SaveFordonControll();
+            body: {
+                view: "form",
+                scroll: false,
+                id: "NewFordonControllForm",
+                prenosniID: 0,
+                width: 500,
+                elements: [
+                    {
+                        view: "select", id: "KontrolGrupp", label: "Typ", value: 1, labelWidth: 150,
+                        options: [
+                            { "id": "1", "value": "Planerad fordonskontroll" },
+                            { "id": "2", "value": "Flygande fordonskontroll" }
+                        ]
+                    },
+                    {
+                        view: "datepicker", id: "KontrollFran", align: "right", label: 'Från:', labelWidth: 150, format: "%Y-%m-%d", on: {
+                            "onChange": function (newv) {
+                                $$("KontrollTill").getPopup().getBody().define("minDate", newv);
+                                $$("KontrollTill").refresh();
+                            }
                         }
-                        else {
-                            webix.message({ type: "error", text: "Ange från- och till datum!" });
+                    },
+                    {
+                        view: "datepicker", id: "KontrollTill", align: "right", label: 'Till:', labelWidth: 150, format: "%Y-%m-%d", on: {
+                            "onChange": function (newv) {
+                                $$("KontrollFran").getPopup().getBody().define("maxDate", newv);
+                                $$("KontrollFran").refresh();
+                            }
                         }
-					}
-				},
-				{ view:"button", value:"Avbryt",click:"$$('newFordonControll').hide();" }
-			]}
-		]
-	}
- }).hide();
+                    },
+                    {
+                        margin: 5, cols: [
+                            {
+                                view: "button", id: "saveFordonControllbtn", value: "Spara", click: function () {
+                                    if ($$("KontrollFran").getValue() && $$("KontrollTill").getValue()) {
+                                        SaveFordonControll();
+                                    }
+                                    else {
+                                        webix.message({ type: "error", text: "Ange från- och till datum!" });
+                                    }
+                                }
+                            },
+                            { view: "button", value: "Avbryt", click: "$$('newFordonControll').hide();" }
+                        ]
+                    }
+                ]
+            }
+        }).hide();
 
-//Change Pass
- webix.ui({
-	id:"changePassWindow",
-	view:"window",
-	responsive:true,
-	position:"center",
-	height:300,
-	width:500,
-	modal:true,
-	head:{
-		view:"toolbar", cols:[
-			{view:"label", label: "Ändra lösenord" },
-			{ view:"button", label: 'Stäng', width: 100, align: 'right', click:"$$('changePassWindow').hide();"}
-		]
-	},
-	body:{
-		view:"form",
-		id:"ChangePassForm",
-		scroll:false,
-		width:550,
-		elements: [
-			{ view:"text", id:"chCurrent", value:'',labelWidth:200, label:"Nuvarande lösenord" },
-            { view: "text", id: "chNewA", type: "password",value:'', labelWidth:200,label:"Nytt lösenord"},
-            { view: "text", id: "chNewB", value: '', type: "password", labelWidth:200,label:"Upprepa nytt lösenord"},
-			{ margin:5, cols:[
-                { view: "button", value: "Uppdatera", type: "form", id: "btn_SendMainChangePass", click: "SendMainChangePassword()"},
-                { view: "button", value: "Avbryt", click: "$$('changePassWindow').hide();" }
-			]}
-		]
-	}
- }).hide();
+        //Change Pass
+        webix.ui({
+            id: "changePassWindow",
+            view: "window",
+            responsive: true,
+            position: "center",
+            height: 300,
+            width: 500,
+            modal: true,
+            head: {
+                view: "toolbar", cols: [
+                    { view: "label", label: "Ändra lösenord" },
+                    { view: "button", label: 'Stäng', width: 100, align: 'right', click: "$$('changePassWindow').hide();" }
+                ]
+            },
+            body: {
+                view: "form",
+                id: "ChangePassForm",
+                scroll: false,
+                width: 550,
+                elements: [
+                    { view: "text", id: "chCurrent", type: "password", value: '', labelWidth: 200, label: "Nuvarande lösenord" },
+                    { view: "text", id: "chNewA", type: "password", value: '', labelWidth: 200, label: "Nytt lösenord" },
+                    { view: "text", id: "chNewB", value: '', type: "password", labelWidth: 200, label: "Upprepa nytt lösenord" },
+                    {
+                        margin: 5, cols: [
+                            { view: "button", value: "Uppdatera", type: "form", id: "btn_SendMainChangePass", click: "SendMainChangePassword()" },
+                            { view: "button", value: "Avbryt", click: "$$('changePassWindow').hide();" }
+                        ]
+                    }
+                ]
+            }
+        }).hide();
 
-//Forget Pass
- webix.ui({
-	id:"forgetPassWindow",
-	view:"window",
-	responsive:true,
-	position:"center",
-	height:300,
-	width:550,
-	modal:true,
-	head:{
-		view:"toolbar", cols:[
-			{view:"label", label: "Glömt lösenord" },
-			{ view:"button", label: 'Stäng', width: 100, align: 'right', click:"$$('forgetPassWindow').hide();"}
-		]
-	},
-	body:{
-		view:"form",
-		id:"ForgetPassForm",
-		scroll:false,
-		width:550,
-		elements: [
-			{ view:"text", id:"frUN", value:'',labelWidth:150, label:"Din e-postadress" },
-			{ margin:5, cols:[
-				{ view:"button", value:"Skicka" , id:"btn_SendMainForgetPass", type:"form", click:"SendMainForgetPassword()"},
-                { view: "button", value: "Avbryt", click: "$$('forgetPassWindow').hide();" }
-			]},
-			{view:"label",label:"",css:"lbl_reg", id:"lbl_msg_reg"}
-		]
-	}
- }).hide();
+        //Forget Pass
+        webix.ui({
+            id: "forgetPassWindow",
+            view: "window",
+            responsive: true,
+            position: "center",
+            height: 300,
+            width: 550,
+            modal: true,
+            head: {
+                view: "toolbar", cols: [
+                    { view: "label", label: "Glömt lösenord" },
+                    { view: "button", label: 'Stäng', width: 100, align: 'right', click: "$$('forgetPassWindow').hide();" }
+                ]
+            },
+            body: {
+                view: "form",
+                id: "ForgetPassForm",
+                scroll: false,
+                width: 550,
+                elements: [
+                    { view: "text", id: "frUN", value: '', labelWidth: 150, label: "Din e-postadress" },
+                    {
+                        margin: 5, cols: [
+                            { view: "button", value: "Skicka", id: "btn_SendMainForgetPass", type: "form", click: "SendMainForgetPassword()" },
+                            { view: "button", value: "Avbryt", click: "$$('forgetPassWindow').hide();" }
+                        ]
+                    },
+                    { view: "label", label: "", css: "lbl_reg", id: "lbl_msg_reg" }
+                ]
+            }
+        }).hide();
 
 
         //Forget Pass
@@ -323,7 +344,7 @@ webix.ui({
             height: 200,
             width: 550,
             modal: true,
-            header:false,
+            header: false,
             body: {
                 view: "form",
                 id: "delUsrWindForm",

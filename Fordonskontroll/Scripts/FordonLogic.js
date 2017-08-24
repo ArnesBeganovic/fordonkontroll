@@ -86,7 +86,7 @@ var DashboardTemplate = {
                             gradient: "rising",
                             padding: { bottom: 100 },
                             xAxis: {
-                                template: "'#Krav#"
+                                template: "#Krav#"
                             },
                             yAxis: {
                                 start: 0,
@@ -94,10 +94,10 @@ var DashboardTemplate = {
                                 end: 100
                             },
                             legend: {
-                                values: [{ text: "Senaste -2", color: "#58dccd" }, { text: "Senaste -1", color: "#a7ee70" }, { text: "Senaste", color: "#36abee" }],
+                                values: [{ text: "Två kontroller sedan", color: "#58dccd" }, { text: "Näst senaste", color: "#a7ee70" }, { text: "Senaste", color: "#36abee" }],
                                 valign: "middle",
                                 align: "right",
-                                width: 90,
+                                width: 155,
                                 layout: "y"
                             },
                             series: [
@@ -198,7 +198,18 @@ var DashboardTemplate = {
                             labelWidth: 150,
                             value: 1, options: []
                         },
-                        { view: "text", placeholder: 'Ange medlemsnr', id: "MedlemSearch", width: 200 },
+                        {
+                            view: "text", placeholder: 'Ange medlemsnr', id: "MedlemSearch", width: 200,
+
+                            on: {
+                                "onKeyPress": function (code, e) {
+                                    if (code == 13) {
+                                        GetMedlemDashboard();
+                                    }
+                                }
+                            }
+
+                        },
                         { view: "button", value: "Sök", width: 100, click: "GetMedlemDashboard()" },
                         {},
                         { view: "button", value: "Till PDF", width: 100, click: "PrintToPdf()" },
@@ -242,7 +253,8 @@ var SearchTemplate = {
         {
             cols: [
                 {},
-                { view: "button", value: "Spara", id: "SaveControll", width: 100, disabled: true, click: "SaveControll()" }
+                { view: "button", value: "Spara", id: "SaveControll", width: 100, disabled: true, click: "SaveControll()" },
+                { width: 110 }
             ]
         },
         {
@@ -282,7 +294,7 @@ var SearchTemplate = {
                     columns: [
                         { id: "krav", fillspace: true, header: "Krav" },
                         {
-                            id: "status", width: 100, header: "Status",
+                            id: "status", width: 193, header: "Status",
                             template: function (obj) {
                                 if (obj.status == 1) {
                                     return "<label class='switch'><input type='checkbox' checked><div class='slider round'></div></label>";
@@ -398,8 +410,8 @@ var KonfAnv = {
                 { id: "user", width: 300, header: "E-post" },
                 { id: "level", fillspace: true, header: "Behörighet" },
                 {
-                    id: "delusrID", width:50, header: "", template: function (ulaz) {
-                        return "<span class='webix_icon fa-trash-o' onclick='DelUsrFun("+ ulaz.id +")'></span>"
+                    id: "delusrID", width: 50, header: "", template: function (ulaz) {
+                        return "<span class='webix_icon fa-trash-o' onclick='DelUsrFun(" + ulaz.id + ")'></span>"
                     }
                 }
             ],
@@ -557,7 +569,7 @@ var LoggedTemplate = {
                 },
                 {},
                 {
-                    view: "text", placeholder: 'Search TaxiNr...', id: "SearchBox", width: 200,
+                    view: "text", placeholder: 'Ange taxinr (tex 123)', id: "SearchBox", width: 200,
                     on: {
                         "onKeyPress": function (code, e) {
                             if (code == 13) {
@@ -593,12 +605,49 @@ var LoggedTemplate = {
                         }
                     ]
                 },
-                { view: "button", value: "Logga ut", width:100,click: "Logout()" },
+                { view: "button", value: "Logga ut", width: 100, click: "Logout()" },
             ]
         },
         TemplateController
 
     ]
+}
+
+var CodeTemplate = {
+    rows: [
+        {
+            template: "<img style='height: 95px;width:70px' src=../img/Taxi-Goteborg-Logo-2015.png>", height: 100
+        },
+        {
+            template: "The Code has been sent to your email. Please enter it!", height: 40
+        },
+        {
+            cols: [
+                {
+                    width: 500,
+                    rows: [
+                        {
+                            view: "text", placeholder: 'Enter Code', id: "CodeBox", width: 200,
+                            on: {
+                                "onKeyPress": function (code, e) {
+                                    if (code == 13) {
+                                        ChangeForgottenPass();
+                                    }
+                                }
+                            }
+                        },
+                        { view: "button", value: "Press", width: 100, click: "ChangeForgottenPass()" }
+                    ]
+                },
+                {}
+            ]
+        }
+
+    ]
+}
+
+var NewPassTemplate = {
+    template: "Doso na red"
 }
 
 var ViewController = {
@@ -607,7 +656,9 @@ var ViewController = {
     type: "space",
     rows: [
         { rows: [{ animate: false, cells: [LoginTemplate] }], batch: "login" },
-        { rows: [{ animate: false, cells: [LoggedTemplate] }], batch: "logged" }
+        { rows: [{ animate: false, cells: [LoggedTemplate] }], batch: "logged" },
+        { rows: [{ animate: false, cells: [CodeTemplate] }], batch: "code" },
+        { rows: [{ animate: false, cells: [NewPassTemplate] }], batch: "newpass" }
     ]
 };
 
@@ -729,7 +780,7 @@ function GetDashboard() {
 
     //Get Piechart data for Narvaro
     UpdatePieChartNarvaro(0);
-    
+
 
     //Get Controll List for Medlemmar tab
     jQuery.ajax({
@@ -1356,10 +1407,10 @@ function ReadFordonHeaderData() {
     //Loop table
     ArnApp.each(FordonHeaderData, function (index, value) {
         switch (value.HeadCol) {
-            case "RegNr":
+            case "Regnr":
                 RegNr = value.DataCol;
                 break;
-            case "TaxiNr":
+            case "Taxinr":
                 TaxiNr = value.DataCol;
                 break;
             case "Medlem":
@@ -1578,7 +1629,8 @@ function PrintToPdf() {
 }
 
 function SendMainForgetPassword() {
-    webix.message("Doradi SendMainForgetPassword funkciju");
+    webix.message("Denna funktion är inte färdigutvecklad ännu. Tack för överseendet!");
+    //Doradi SendMainForgetPassword funkciju
     return;
     var frUN = $$("frUN").getValue();
     $$("btn_SendMainForgetPass").disable();
@@ -1606,7 +1658,8 @@ function SendMainForgetPassword() {
 }
 
 function SendMainChangePassword() {
-    webix.message("Doradi SendMainChangePassword funkciju");
+    webix.message("Denna funktion är inte färdigutvecklad ännu. Tack för överseendet!");
+    //Doradi SendMainChangePassword funkciju
     return;
 }
 
@@ -1649,9 +1702,9 @@ function UpdatePieChartEfterkontroll(idEft) {
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
             var ekData = [
-                { andel: data[0].ingen, efterKontrolTyp: "Ingen", color: "#ee3639" },
+                { andel: data[0].ingen, efterKontrolTyp: "Ingen", color: "#86EF36" },
                 { andel: data[0].senare, efterKontrolTyp: "Senare", color: "#ee9e36" },
-                { andel: data[0].snarast, efterKontrolTyp: "Snarast", color: "#eeea36" }
+                { andel: data[0].snarast, efterKontrolTyp: "Snarast", color: "#ee3639" }
             ];
             $$("efterkontroll").clearAll();
             $$("efterkontroll").parse(ekData);
@@ -1662,13 +1715,13 @@ function UpdatePieChartEfterkontroll(idEft) {
 
 function DelPlanConFun(id) {
     var isThere = false;
-    if (!confirm("Vill du verkligen radera kontroll?")){
+    if (!confirm("Vill du verkligen radera kontroll?")) {
         return;
     }
 
     for (var i = 0; i < DelPlanCon.length; i++) {
-        if (DelPlanCon[i].id == id && DelPlanCon[i].del == "1"){
-            isThere = true; 
+        if (DelPlanCon[i].id == id && DelPlanCon[i].del == "1") {
+            isThere = true;
         }
     }
     if (isThere) {
@@ -1725,4 +1778,104 @@ function DelUsrFunCont() {
     }
     $$("delUsrWind").hide();
     DelUsr = 0;
+}
+
+function SendMainChangePassword() {
+
+    var chCurrent = $$("chCurrent").getValue();
+    var chNewA = $$("chNewA").getValue();
+    var chNewB = $$("chNewB").getValue();
+
+    if (chCurrent.length <= 3) {
+        webix.message({ type: "error", text: "Please enter current password!" });
+        return;
+    }
+
+    if (chNewA.length <= 3 || chNewB.length <= 3) {
+        webix.message({ type: "error", text: "Please enter new password!" });
+        return;
+    }
+
+    if (chNewA != chNewB) {
+        webix.message({ type: "error", text: "New password not match!" });
+        return;
+    }
+
+    if (chCurrent == chNewA) {
+        webix.message({ type: "error", text: "Can not use same password!" });
+        return;
+    }
+
+    jQuery.ajax({
+        url: 'api/config/chpass/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser,
+            pass: chCurrent,
+            passA: chNewA,
+            passB: chNewB
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            if (data == 0) {
+                //User not logged
+                location.reload();
+                return;
+            } else if (data == 1) {
+                //User not exists
+                location.reload();
+                return;
+            } else if (data == 2) {
+                //Password not matching
+                webix.message({ type: "error", text: "Please enter correct password!!!" });
+                return;
+            }
+            webix.message("Password sucessfully changed!");
+            $$("changePassWindow").hide();
+            //Config button was pressed in order to change password. Show Krav view to the user
+            ShowConfig("KonfigureraKrav");
+        }
+    })
+    return;
+}
+
+function SendMainForgetPassword() {
+    var frUN = $$("frUN").getValue();
+    $$("btn_SendMainForgetPass").disable();
+    if (frUN.search("@gmail.com") > 0) {
+        //Check if user exists
+        jQuery.ajax({
+            url: 'api/config/frgpass/',
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            data: JSON.stringify({
+                User: window.activeUser,
+                idCall: frUN
+            }),
+            //If success update webix. Data is Krav ID from database that was updated or created
+            success: function (data) {
+                console.log(data)
+                if (data[0].user == "1") {
+                    webix.message({ type: "error", text: "User does not exist!" })
+                    $$("btn_SendMainForgetPass").enable();
+                    return;
+                } else {
+                    $$("ViewScreen").showBatch("code");
+                    $$("btn_SendMainForgetPass").enable();
+                    $$('forgetPassWindow').hide();
+                }
+
+            }
+        })
+    } else {
+        $$("lbl_msg_reg").setValue("Kunde inte skicka återställningsmailet! Kontrollera din e-postadress och försök igen!!");
+        $$("btn_SendMainForgetPass").enable();
+    }
+}
+
+function ChangeForgottenPass() {
+    $$("ViewScreen").showBatch("newpass");
 }
