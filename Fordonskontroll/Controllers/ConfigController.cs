@@ -644,17 +644,6 @@ namespace Source.Controllers
                         cmdA.Parameters.Add(paramA);
                         conA.Open();
                         SqlDataReader rdr = cmdA.ExecuteReader();
-                        while (rdr.Read())
-                        {
-                        string rawcode;
-                        rawcode = rdr["Result"].ToString();
-                        string md5Code;
-                        using (MD5 md5HashReal = MD5.Create())
-                        {
-                            md5Code = GetMd5Hash(md5HashReal, rawcode.ToString());
-                        }
-                        pcList[0].pass = md5Code;
-                    }
                         conA.Close();
                         return pcList;
                     }
@@ -663,11 +652,100 @@ namespace Source.Controllers
                 {
                     PassChanger fcA = new PassChanger();
                     fcA.User = "1";
-                    fcA.pass = "1";
                     pcList.Add(fcA);
                     return pcList;//Email does not exist in database
                 }
         }
+
+        [Route("checkcode")]
+        [System.Web.Http.HttpPost]
+        public bool CheckCode([FromBody] UserRowLogId urlid)
+        {
+            List<PassChanger> pcList = new List<PassChanger>();
+            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(CS))
+            {
+                string selectQuarry = "select * from del_Users where del_ID = @del_ID and del_FrgPass = @del_FrgPass";
+                SqlCommand cmd = new SqlCommand(selectQuarry, con);
+                SqlParameter paramA = new SqlParameter("@del_ID", urlid.User);
+                cmd.Parameters.Add(paramA);
+                SqlParameter paramB = new SqlParameter("@del_FrgPass", urlid.idCall);
+                cmd.Parameters.Add(paramB);
+                con.Open();
+                SqlDataReader rdr = cmd.ExecuteReader();
+                while (rdr.Read())
+                {
+                    PassChanger fc = new PassChanger();
+                    fc.User = rdr["del_ID"].ToString();
+                    pcList.Add(fc);
+                }
+                con.Close();
+            }
+            if (pcList.Count == 1)
+            {
+                return true; //Code is corect, user returned, send true
+            }
+            else
+            {
+                return false; //Code or user not found, send false
+            }
+        }
+
+        [Route("savepassforg")]
+        [System.Web.Http.HttpPost]
+        public bool SavePassForg([FromBody] UserRowLogId pc)
+        {
+            List<PassChanger> pcList = new List<PassChanger>();
+            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(CS))
+            {
+                string selectQuarry = "select * from del_Users where del_ID = " + pc.User;
+                SqlCommand cmd = new SqlCommand(selectQuarry, con);
+                con.Open();
+                SqlDataReader rdr = cmd.ExecuteReader();
+                while (rdr.Read())
+                {
+                    PassChanger fc = new PassChanger();
+                    fc.User = rdr["del_User"].ToString();
+                    pcList.Add(fc);
+                }
+                con.Close();
+            }
+            if (pcList.Count == 1)
+            {
+                //pc has raw current password and raw new password
+                //pcList[0] has user email and encripted password
+                //match them:
+                StringBuilder gpReal = new StringBuilder();
+                gpReal.Append(pcList[0].User);
+                gpReal.Append(pc.idCall);
+                gpReal.Append(pc.idCall);
+
+                //Create pass that will be stored in the database
+                string passForDB;
+                using (MD5 md5HashReal = MD5.Create())
+                {
+                    passForDB = GetMd5Hash(md5HashReal, gpReal.ToString());
+                }
+
+                //Update password based on user id
+                using (SqlConnection con = new SqlConnection(CS))
+                {
+                    string updateQuarry = "update del_Users set del_Pass = @del_Pass where del_ID = @del_ID";
+                    SqlCommand cmd = new SqlCommand(updateQuarry, con);
+                    SqlParameter del_ID = new SqlParameter("@del_ID", pc.User);
+                    cmd.Parameters.Add(del_ID);
+                    SqlParameter del_Pass = new SqlParameter("@del_Pass", passForDB);
+                    cmd.Parameters.Add(del_Pass);
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                    con.Close();
+                    return true;
+                 }
+            }
+            return true;
+        }
+            
 
         /*
          * Classes needed for listing and data processing

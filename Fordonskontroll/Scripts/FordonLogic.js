@@ -247,6 +247,7 @@ var DashboardTemplate = {
 //napadu pa cu to sprijeciti ovom varijablom.
 var DelPlanCon = [];
 var DelUsr = 0;
+var fpObj = { user: "" }
 
 var SearchTemplate = {
     rows: [
@@ -647,7 +648,32 @@ var CodeTemplate = {
 }
 
 var NewPassTemplate = {
-    template: "Doso na red"
+    rows: [
+        {
+            template: "<img style='height: 95px;width:70px' src=../img/Taxi-Goteborg-Logo-2015.png>", height: 100
+        },
+        {
+            template: "Type your new password", height: 35
+        },
+        {
+            cols: [
+                { view: "text", type: "password", placeholder: 'New Password', id: "cnPassA", width: 200 },
+                {}
+            ]
+        },
+        {
+            cols: [
+                { view: "text", type: "password", placeholder: 'Repeat password', id: "cnPassB", width: 200 },
+                {}
+            ]
+        },
+        {
+            cols: [
+                { view: "button", value: "Press", width: 200, click: "CPFinalStep()" },
+                {}
+            ]
+        }
+    ]
 }
 
 var ViewController = {
@@ -1758,7 +1784,6 @@ function DelUsrFun(id) {
 }
 
 function DelUsrFunCont() {
-    console.log(DelUsr)
     if (DelUsr != 0) {
         jQuery.ajax({
             url: 'api/config/deluser/',
@@ -1841,10 +1866,11 @@ function SendMainChangePassword() {
     return;
 }
 
+
 function SendMainForgetPassword() {
     var frUN = $$("frUN").getValue();
     $$("btn_SendMainForgetPass").disable();
-    if (frUN.search("@gmail.com") > 0) {
+    if (frUN.search("@taxigoteborg.se") > 0) {
         //Check if user exists
         jQuery.ajax({
             url: 'api/config/frgpass/',
@@ -1857,17 +1883,17 @@ function SendMainForgetPassword() {
             }),
             //If success update webix. Data is Krav ID from database that was updated or created
             success: function (data) {
-                console.log(data)
                 if (data[0].user == "1") {
                     webix.message({ type: "error", text: "User does not exist!" })
                     $$("btn_SendMainForgetPass").enable();
                     return;
                 } else {
+                    fpObj.user = data[0].user;
                     $$("ViewScreen").showBatch("code");
                     $$("btn_SendMainForgetPass").enable();
                     $$('forgetPassWindow').hide();
+                    console.log(fpObj)
                 }
-
             }
         })
     } else {
@@ -1877,5 +1903,56 @@ function SendMainForgetPassword() {
 }
 
 function ChangeForgottenPass() {
-    $$("ViewScreen").showBatch("newpass");
+    CodeBox = $$("CodeBox").getValue();
+    if (CodeBox.length == 6) {
+        jQuery.ajax({
+            url: 'api/config/checkcode/',
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            data: JSON.stringify({
+                User: fpObj.user,
+                idCall: CodeBox
+            }),
+            success: function (data) {
+                if (data) {
+                    $$("ViewScreen").showBatch("newpass");
+                } else {
+                    webix.message({ type: "error", text: "Incorrect code!!!" });
+                    location.reload();
+                }
+            }
+        })
+    }
+}
+
+function CPFinalStep() {
+    cnPassA = $$("cnPassA").getValue();
+    cnPassB = $$("cnPassB").getValue();
+
+    if (cnPassA.length <= 3 || cnPassB.length <= 3) {
+        webix.message({ type: "error", text: "Password needs to have at least 4 characters!" })
+        return;
+    }
+
+    if (cnPassA != cnPassB) {
+        webix.message({ type: "error", text: "Passwords do not match!" })
+        return;
+    }
+
+    jQuery.ajax({
+        url: 'api/config/savepassforg/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: fpObj.user,
+            idCall: cnPassA
+        }),
+        success: function (data) {
+            webix.message("Password changed!!!");
+            $$("ViewScreen").showBatch("login");
+        }
+    })
+
 }
