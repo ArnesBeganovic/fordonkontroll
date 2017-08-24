@@ -1185,34 +1185,38 @@ function SaveUser() {
         sentType = "PUT";
     }
 
-
-    //Send request
-    jQuery.ajax({
-        url: 'api/config/saveuser/',
-        type: sentType,
-        contentType: 'application/json; charset=utf-8',
-        //Get data from webix
-        data: JSON.stringify({
-            ID: valueInd,
-            User: $$("UserA").getValue(),
-            Level: $$("UserB").getValue(),
-            Check: true,
-            activeUser: window.activeUser
-        }),
-        dataType: 'json',
-        //If success update webix. Data is Krav ID from database that was updated or created
-        success: function (data) {
-            //Id has to be > 0
-            if (data * 1 > 0) {
-                //Get new updated data
-                GetUser();
-                $$("newUser").hide();
-                //In case send data is not OK it will return 0
-            } else {
-                webix.message({ type: "error", text: "Användaren sparades inte!" })
+    if ($$("UserA").getValue().search("@taxigoteborg.se") > 0) {
+        //Send request
+        jQuery.ajax({
+            url: 'api/config/saveuser/',
+            type: sentType,
+            contentType: 'application/json; charset=utf-8',
+            //Get data from webix
+            data: JSON.stringify({
+                ID: valueInd,
+                User: $$("UserA").getValue(),
+                Level: $$("UserB").getValue(),
+                Check: true,
+                activeUser: window.activeUser
+            }),
+            dataType: 'json',
+            //If success update webix. Data is Krav ID from database that was updated or created
+            success: function (data) {
+                //Id has to be > 0
+                if (data * 1 > 0) {
+                    //Get new updated data
+                    GetUser();
+                    $$("newUser").hide();
+                    //In case send data is not OK it will return 0
+                } else {
+                    webix.message({ type: "error", text: "Användaren sparades inte!" })
+                }
             }
-        }
-    })
+        })
+    } else {
+        webix.message({type:"error",text:"Only taxigoteborg.se users allowed!"})
+    }
+    
 }
 
 function SaveFordonControll() {
@@ -1865,7 +1869,6 @@ function SendMainChangePassword() {
     })
     return;
 }
-
 
 function SendMainForgetPassword() {
     var frUN = $$("frUN").getValue();
