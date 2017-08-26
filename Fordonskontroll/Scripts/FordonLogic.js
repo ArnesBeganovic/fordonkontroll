@@ -18,6 +18,7 @@ var DashboardTemplate = {
                             view: "chart",
                             id: "KravPerYearBarChartLatest",
                             type: "stackedBar",
+                            height:400,
                             barWidth: 60,
                             padding: { bottom: 100 },
                             xAxis: {
@@ -76,9 +77,32 @@ var DashboardTemplate = {
                 body: {
                     rows: [
                         {
+                            height: 40,
+                            cols: [
+                                {},
+                                {
+                                    view: "richselect",
+                                    id: "TidKontPicker",
+                                    label: "Kontrolltyp",
+                                    labelWidth: 150,
+                                    value: 1, options: [
+                                        { id: 1, value: "Planerad fordonskontrol" },
+                                        { id: 2, value: "Flygande fordonskontroll" }
+                                    ],
+                                    width: 400,
+                                    on: {
+                                        "onChange": function (newValue, oldValue) {
+                                            GetSecondDashboardTab(newValue);
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
                             view: "chart",
                             id: "KravPerYearBarChart",
                             type: "bar",
+                            height:400,
                             barWidth: 20,
                             radius: 2,
                             gradient: "rising",
@@ -135,11 +159,9 @@ var DashboardTemplate = {
                                     width: 400,
                                     on: {
                                         "onChange": function (newValue, oldValue) {
-                                            console.log("newValue " + newValue);
-                                            console.log("oldValue " + oldValue);
                                             if (newValue != 1555555) {
-                                                UpdatePieChartNarvaro(newValue);
-                                                UpdatePieChartEfterkontroll(newValue);
+                                                UpdatePieChartNarvaro(newValue, $$("TidKontPicker").getValue());
+                                                UpdatePieChartEfterkontroll(newValue, $$("TidKontPicker").getValue());
                                             }
                                         }
                                     }
@@ -152,6 +174,7 @@ var DashboardTemplate = {
                                 {
                                     view: "chart",
                                     type: "pie3D",
+                                    height:300,
                                     container: "chartDiv",
                                     value: "#andel#",
                                     color: "#color#",
@@ -325,6 +348,9 @@ var SearchTemplate = {
     ]
 }
 
+
+
+
 var KonfKrav = {
     rows: [
         {
@@ -392,6 +418,9 @@ var KonfKrav = {
     ]
 }
 
+
+
+
 var KonfAnv = {
     rows: [
         {
@@ -430,6 +459,9 @@ var KonfAnv = {
         }
     ]
 }
+
+
+
 
 var KonfFord = {
     rows: [
@@ -495,6 +527,9 @@ var KonfFord = {
         }
     ]
 }
+
+
+
 
 var ConfigurationTemplate = {
     id: "KonfScreen",
@@ -767,26 +802,16 @@ function GetDashboard() {
     * Opens Dashboard
     */
     $$("MainScreen").showBatch("dash");
+    GetFirstDashboardTab();
+    GetSecondDashboardTab(1);
+    GetThirdDashboardTab();
+    $$("TidKontPicker").setValue(1);
+    $$("TidKontPicker").refresh();
+    CalculateForFlygandeKontroll();
+    
+}
 
-    //Get barchart data latest big controlls
-    jQuery.ajax({
-        url: 'api/dashboard/KravPerYearBarChart/',
-        type: 'POST',
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        data: JSON.stringify({
-            User: window.activeUser
-        }),
-        //If success update webix. Data is Krav ID from database that was updated or created
-        success: function (data) {
-            var transformedData = KravPerYearBarChartData(data);
-
-            $$("KravPerYearBarChart").clearAll();
-            $$("KravPerYearBarChart").parse(transformedData);
-            $$("KravPerYearBarChart").refresh();
-        }
-    })
-
+function GetFirstDashboardTab() {
     //Get barchart data latest status
     jQuery.ajax({
         url: 'api/dashboard/KravToday/',
@@ -803,22 +828,139 @@ function GetDashboard() {
             $$("KravPerYearBarChartLatest").refresh();
         }
     })
+}
+
+function GetSecondDashboardTab(id) {
+    $$("KravPerYearBarChart").clearAll();
+    $$("narvaro").clearAll();
+    $$("efterkontroll").clearAll();
+
+    //Update chart
+    UpdateBarChartPlanneradeKontrol(id);
 
     //Get Piechart data for efterkontroll
-    UpdatePieChartEfterkontroll(0);
+    UpdatePieChartEfterkontroll(0, id);
 
     //Get Piechart data for Narvaro
-    UpdatePieChartNarvaro(0);
-
-
+    UpdatePieChartNarvaro(0, id);
+    //Get RichSelect data
+    UpdateRichSelectWithControlls(id);    
+}
+function UpdateRichSelectWithControlls(id) {
     //Get Controll List for Medlemmar tab
     jQuery.ajax({
-        url: 'api/dashboard/KontrollTillMedlemmar/',
+        url: 'api/dashboard/kontrollistonrichselectatdashboard/',
         type: 'POST',
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         data: JSON.stringify({
-            User: window.activeUser
+            User: window.activeUser,
+            idCall: id
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+
+            var trData = [{ id: "1555555", value: "Välj" }]
+
+            for (i = 0; i < data.length; i++) {
+                trData.push({
+                    id: data[i].id,
+                    value: data[i].value
+                })
+            }
+            $$("ControlSelectorEftNar").getPopup().getList().clearAll();
+            $$("ControlSelectorEftNar").getPopup().getList().parse(trData);
+            $$("ControlSelectorEftNar").refresh();
+            $$("ControlSelectorEftNar").setValue(1555555);
+            $$("ControlSelectorEftNar").refresh();
+        }
+    })
+}
+function UpdateBarChartPlanneradeKontrol(id) {
+    //Get barchart data latest big controlls
+    jQuery.ajax({
+        url: 'api/dashboard/KravPerYearBarChart/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser,
+            idCall: "",
+            izvor:id
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            var transformedData = KravPerYearBarChartData(data);
+
+            $$("KravPerYearBarChart").clearAll();
+            $$("KravPerYearBarChart").parse(transformedData);
+            $$("KravPerYearBarChart").refresh();
+        }
+    })
+}
+function UpdatePieChartNarvaro(idNar, izvor) {
+
+    jQuery.ajax({
+        url: 'api/dashboard/Narvaro/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser,
+            idCall: idNar,
+            izvor: izvor
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            /* RESULT
+            var narvaroData = [
+                { andel: "20", narvaroTyp: "EJ OK", color: "#ee9e36" },
+                { andel: "80", narvaroTyp: "OK", color: "#86EF36" }
+            ];
+            */
+            $$("narvaro").clearAll();
+            $$("narvaro").parse(data);
+            $$("narvaro").refresh();
+
+        }
+    })
+}
+function UpdatePieChartEfterkontroll(idEft,izvor) {
+    jQuery.ajax({
+        url: 'api/dashboard/Efterkontroll/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser,
+            idCall: idEft,
+            izvor: izvor
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            var ekData = [
+                { andel: data[0].ingen, efterKontrolTyp: "Ingen", color: "#86EF36" },
+                { andel: data[0].senare, efterKontrolTyp: "Senare", color: "#ee9e36" },
+                { andel: data[0].snarast, efterKontrolTyp: "Snarast", color: "#ee3639" }
+            ];
+            $$("efterkontroll").clearAll();
+            $$("efterkontroll").parse(ekData);
+            $$("efterkontroll").refresh();
+        }
+    })
+}
+
+function GetThirdDashboardTab(id) {
+    //Get Controll List for Medlemmar tab
+    jQuery.ajax({
+        url: 'api/dashboard/kontrollistonrichselectatdashboard/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser,
+            idCall: "3",
+            izvor:""
         }),
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
@@ -836,13 +978,19 @@ function GetDashboard() {
             $$("ControlSelector").refresh();
             $$("ControlSelector").setValue(1555555);
             $$("ControlSelector").refresh();
+        }
+    })
+}
 
-            $$("ControlSelectorEftNar").getPopup().getList().clearAll();
-            $$("ControlSelectorEftNar").getPopup().getList().parse(trData);
-            $$("ControlSelectorEftNar").refresh();
-            $$("ControlSelectorEftNar").setValue(1555555);
-            $$("ControlSelectorEftNar").refresh();
-
+function CalculateForFlygandeKontroll() {
+    jQuery.ajax({
+        url: 'api/dashboard/flygandekontrollcalc/',
+        type: 'GET',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function () {
+            //nista ne vraca
         }
     })
 }
@@ -1659,57 +1807,6 @@ function MedlemTabellColumns(data, medlem) {
 
 function PrintToPdf() {
     webix.toPDF($$('medlemDatatable'));
-}
-
-
-function UpdatePieChartNarvaro(idNar) {
-    jQuery.ajax({
-        url: 'api/dashboard/Narvaro/',
-        type: 'POST',
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        data: JSON.stringify({
-            User: window.activeUser,
-            idCall: idNar
-        }),
-        //If success update webix. Data is Krav ID from database that was updated or created
-        success: function (data) {
-            /* RESULT
-            var narvaroData = [
-                { andel: "20", narvaroTyp: "EJ OK", color: "#ee9e36" },
-                { andel: "80", narvaroTyp: "OK", color: "#86EF36" }
-            ];
-            */
-            $$("narvaro").clearAll();
-            $$("narvaro").parse(data);
-            $$("narvaro").refresh();
-
-        }
-    })
-}
-
-function UpdatePieChartEfterkontroll(idEft) {
-    jQuery.ajax({
-        url: 'api/dashboard/Efterkontroll/',
-        type: 'POST',
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        data: JSON.stringify({
-            User: window.activeUser,
-            idCall: idEft
-        }),
-        //If success update webix. Data is Krav ID from database that was updated or created
-        success: function (data) {
-            var ekData = [
-                { andel: data[0].ingen, efterKontrolTyp: "Ingen", color: "#86EF36" },
-                { andel: data[0].senare, efterKontrolTyp: "Senare", color: "#ee9e36" },
-                { andel: data[0].snarast, efterKontrolTyp: "Snarast", color: "#ee3639" }
-            ];
-            $$("efterkontroll").clearAll();
-            $$("efterkontroll").parse(ekData);
-            $$("efterkontroll").refresh();
-        }
-    })
 }
 
 function DelPlanConFun(id) {

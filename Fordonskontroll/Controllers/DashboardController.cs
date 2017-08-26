@@ -14,42 +14,13 @@ namespace Fordonskontroll.Controllers
     [RoutePrefix("api/dashboard")]
     public class DashboardController : ApiController
     {
-        [Route("KravPerYearBarChart")]
-        [System.Web.Http.HttpPost]
-        public List<KravPerYearBarChart> Post([FromBody] UserControll uc)
-        {
-            List<KravPerYearBarChart> kpybcList = new List<KravPerYearBarChart>();
-
-            //Connect and retrieve data
-            if (Login.CheckLogging(uc.user))
-            {
-                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
-                using (SqlConnection con = new SqlConnection(CS))
-                {
-                    SqlCommand cmd = new SqlCommand("Dashboard_KravPerYear", con);
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    con.Open();
-                    SqlDataReader rdr = cmd.ExecuteReader();
-                    while (rdr.Read())
-                    {
-                        KravPerYearBarChart kpybc = new KravPerYearBarChart();
-                        kpybc.andel = Convert.ToInt32(rdr["andel"]);
-                        kpybc.datum = rdr["datum"].ToString();
-                        kpybc.krav = rdr["krav"].ToString();
-                        kpybcList.Add(kpybc);
-                    }
-                }
-            }
-
-            return kpybcList;
-        }
-
+        //Tab 1 - stacked bar chart
         [Route("KravToday")]
         [System.Web.Http.HttpPost]
         public List<KravToday> KravTodayMethod([FromBody] UserControll uc)
         {
             List<KravToday> ktList = new List<KravToday>();
-
+            //System.Threading.Thread.Sleep(5000);
             //Connect and retrieve data
             if (Login.CheckLogging(uc.user))
             {
@@ -75,11 +46,15 @@ namespace Fordonskontroll.Controllers
             return ktList;
         }
 
-        [Route("Efterkontroll")]
+        //Tab 2 - bar chart
+        [Route("KravPerYearBarChart")]
         [System.Web.Http.HttpPost]
-        public List<Efterkontroll> EKFunc([FromBody] UserControllEftNar uc)
+        public List<KravPerYearBarChart> Post([FromBody] UserControllEftNar uc)
         {
-            List<Efterkontroll> ekList = new List<Efterkontroll>();
+            List<KravPerYearBarChart> kpybcList = new List<KravPerYearBarChart>();
+            string izvor = "";
+            if (uc.izvor == "1") { izvor = "Dashboard_KravPerYear"; }
+            else if (uc.izvor == "2") { izvor = "Dashboard_KravPerYearFlygande"; }
 
             //Connect and retrieve data
             if (Login.CheckLogging(uc.user))
@@ -87,7 +62,41 @@ namespace Fordonskontroll.Controllers
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
                 using (SqlConnection con = new SqlConnection(CS))
                 {
-                    SqlCommand cmd = new SqlCommand("Dashboard_Efterkontroll", con);
+                    SqlCommand cmd = new SqlCommand(izvor, con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    con.Open();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        KravPerYearBarChart kpybc = new KravPerYearBarChart();
+                        kpybc.andel = Convert.ToInt32(rdr["andel"]);
+                        kpybc.datum = rdr["datum"].ToString();
+                        kpybc.krav = rdr["krav"].ToString();
+                        kpybcList.Add(kpybc);
+                    }
+                }
+            }
+
+            return kpybcList;
+        }
+
+        //Tab 2 - Pie Chart Efterkontroll
+        [Route("Efterkontroll")]
+        [System.Web.Http.HttpPost]
+        public List<Efterkontroll> EKFunc([FromBody] UserControllEftNar uc)
+        {
+            List<Efterkontroll> ekList = new List<Efterkontroll>();
+            string izvor = "";
+            if (uc.izvor == "1") { izvor = "Dashboard_Efterkontroll"; }
+            else if (uc.izvor == "2") { izvor = "Dashboard_EfterkontrollFlygande"; }
+
+            //Connect and retrieve data
+            if (Login.CheckLogging(uc.user))
+            {
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
+                {
+                    SqlCommand cmd = new SqlCommand(izvor, con);
                     cmd.CommandType = CommandType.StoredProcedure;
                     SqlParameter paramA = new SqlParameter("@KontrollID", uc.idCall);
                     cmd.Parameters.Add(paramA);
@@ -107,19 +116,22 @@ namespace Fordonskontroll.Controllers
             return ekList;
         }
 
+        //Tab 2 - Pie Chart Narvaro
         [Route("Narvaro")]
         [System.Web.Http.HttpPost]
         public List<Narvaro> NVFunc([FromBody] UserControllEftNar uc)
         {
             List<Narvaro> nvList = new List<Narvaro>();
-
+            string izvor = "";
+            if (uc.izvor == "1") { izvor = "Dashboard_Narvaro"; }
+            else if (uc.izvor == "2") { izvor = "Dashboard_NarvaroFlygande"; }
             //Connect and retrieve data
             if (Login.CheckLogging(uc.user))
             {
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
                 using (SqlConnection con = new SqlConnection(CS))
                 {
-                    SqlCommand cmd = new SqlCommand("Dashboard_Narvaro", con);
+                    SqlCommand cmd = new SqlCommand(izvor, con);
                     cmd.CommandType = CommandType.StoredProcedure;
                     SqlParameter paramA = new SqlParameter("@KontrollID", uc.idCall);
                     cmd.Parameters.Add(paramA);
@@ -139,9 +151,10 @@ namespace Fordonskontroll.Controllers
             return nvList;
         }
 
-        [Route("KontrollTillMedlemmar")]
+        //Tab 2 and 3 - object list for Richselect
+        [Route("kontrollistonrichselectatdashboard")]
         [System.Web.Http.HttpPost]
-        public List<KTMeddlemar> KTMFunc([FromBody] UserControll uc)
+        public List<KTMeddlemar> KTMFunc([FromBody] UserControllEftNar uc)
         {
             List<KTMeddlemar> ktmList = new List<KTMeddlemar>();
 
@@ -153,6 +166,8 @@ namespace Fordonskontroll.Controllers
                 {
                     SqlCommand cmd = new SqlCommand("Dashboard_getAllPlannedControlls", con);
                     cmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter paramA = new SqlParameter("@id", uc.idCall);
+                    cmd.Parameters.Add(paramA);
                     con.Open();
                     SqlDataReader rdr = cmd.ExecuteReader();
                     while (rdr.Read())
@@ -168,6 +183,7 @@ namespace Fordonskontroll.Controllers
             return ktmList;
         }
 
+        //Tab 3 - Medlemmar table result
         [Route("DashboardMedlemmarCall")]
         [System.Web.Http.HttpPost]
         public List<DashMedlemmar> DMFunc([FromBody] DMObj dmo)
@@ -203,6 +219,22 @@ namespace Fordonskontroll.Controllers
             return dmList;
         }
 
+        //All tabs - prepare for flygande pick on richselect
+        [Route("flygandekontrollcalc")]
+        [System.Web.Http.HttpGet]
+        public void FKC()
+        {
+            string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(CS))
+            {
+                SqlCommand cmd = new SqlCommand("Dashboard_Flygande_Antal_Uppdatera", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                con.Open();
+                SqlDataReader rdr = cmd.ExecuteReader();
+                con.Close();
+            }
+        } 
+
         public class DashMedlemmar
         {
             public int medlem { get; set; }
@@ -211,7 +243,6 @@ namespace Fordonskontroll.Controllers
             public string status { get; set; }
 
         }
-
         public class DMObj
         {
             public string user { get; set; }
@@ -222,7 +253,6 @@ namespace Fordonskontroll.Controllers
         {
             public string user { get; set; }
         }
-        
         public class KTMeddlemar
         {
             public int id { get; set; }
@@ -253,11 +283,11 @@ namespace Fordonskontroll.Controllers
             public string narvaroTyp { get; set; }
             public string color { get; set; }
         }
-
         public class UserControllEftNar
         {
             public string user { get; set; }
             public string idCall { get; set; }
+            public string izvor { get; set; }
         }
     }
 }
