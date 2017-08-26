@@ -104,6 +104,41 @@ namespace Source.Controllers
             }
         }
 
+        [Route("updatekravdirect")]
+        [System.Web.Http.HttpPut]
+        public long UKD([FromBody] KravRow kravB)
+        {
+
+            KravRow kravT = ProtectDatabaseKrav(kravB);
+
+            //If everything is OK proceed
+            if (kravT.Check && Login.CheckLogging(kravB.User))
+            {
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
+                {
+                    string updateQuarry = "update KravTabell set Status = @Status where KravID = @KravID";
+                    SqlCommand cmd = new SqlCommand(updateQuarry, con);
+                    SqlParameter paramOriginalKravId = new SqlParameter("@KravID", kravT.id);
+                    cmd.Parameters.Add(paramOriginalKravId);
+                    SqlParameter paramOriginalStatus = new SqlParameter("@Status", kravT.Status);
+                    cmd.Parameters.Add(paramOriginalStatus);
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                    return kravT.id;
+                }
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        
+
+
+
+
         [Route("savekrav")]
         [System.Web.Http.HttpPost]
         public long POST([FromBody] KravRow kravB)

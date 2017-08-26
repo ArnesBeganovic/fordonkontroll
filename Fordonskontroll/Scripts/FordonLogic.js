@@ -20,7 +20,6 @@ var DashboardTemplate = {
                             type: "stackedBar",
                             barWidth: 60,
                             padding: { bottom: 100 },
-                            height: 450,
                             xAxis: {
                                 template: "<div class='rotated'>#krav#</div>"
                             },
@@ -82,7 +81,6 @@ var DashboardTemplate = {
                             type: "bar",
                             barWidth: 20,
                             radius: 2,
-                            height: 400,
                             gradient: "rising",
                             padding: { bottom: 100 },
                             xAxis: {
@@ -150,7 +148,6 @@ var DashboardTemplate = {
                             ]
                         },
                         {
-                            height: 300,
                             cols: [
                                 {
                                     view: "chart",
@@ -287,7 +284,7 @@ var SearchTemplate = {
                             data: [],
                         }
                     ],
-                    gravity: 0.35
+                    gravity: 0.3
                 },
                 {
                     view: "datatable",
@@ -331,6 +328,7 @@ var SearchTemplate = {
 var KonfKrav = {
     rows: [
         {
+            height:40,
             cols: [
                 {},
                 {
@@ -348,10 +346,12 @@ var KonfKrav = {
         {
             view: "datatable",
             id: "KravTableListConfig",
+            editable: true,
+            editaction: "dblclick",
             columns: [
                 { id: "krav", width: 300, header: "Krav" },
                 {
-                    id: "status", width: 100, header: "Status", template: function (ulaz) {
+                    id: "status", width: 100, header: "Status", editor: "richselect", options: [{ id: 1, value: "Aktivt" }, { id: 2, value: "Inaktivt" }], template: function (ulaz) {
                         if (ulaz.status == 1) {
                             return "Aktivt";
                         } else {
@@ -380,7 +380,12 @@ var KonfKrav = {
             data: [],
             on: {
                 "onItemDblClick": function (id) {
-                    ShowKravWindow(id.row);
+                    if (id.column != "status") {
+                        ShowKravWindow(id.row);
+                    }                    
+                },
+                "onAfterEditStop": function (state, editor) {
+                    UpdateKravDirect(state.value, $$("KravTableListConfig").data.pull[editor.row].id)
                 }
             }
         }
@@ -405,7 +410,6 @@ var KonfAnv = {
         },
         {
             view: "datatable",
-            height: 500,
             id: "UserTableListConfig",
             columns: [
                 { id: "user", width: 300, header: "E-post" },
@@ -495,7 +499,6 @@ var KonfFord = {
 var ConfigurationTemplate = {
     id: "KonfScreen",
     visibleBatch: "Krav",
-    height: 500,
     rows: [
         { rows: [{ animate: false, cells: [KonfKrav] }], batch: "Krav" },
         { rows: [{ animate: false, cells: [KonfAnv] }], batch: "Anvandare" },
@@ -620,7 +623,7 @@ var CodeTemplate = {
             template: "<img style='height: 95px;width:70px' src=../img/Taxi-Goteborg-Logo-2015.png>", height: 100
         },
         {
-            template: "The Code has been sent to your email. Please enter it!", height: 40
+            template: "En säkerhetskod har skickats till din e-postadress.", height: 40
         },
         {
             cols: [
@@ -628,7 +631,7 @@ var CodeTemplate = {
                     width: 500,
                     rows: [
                         {
-                            view: "text", placeholder: 'Enter Code', id: "CodeBox", width: 200,
+                            view: "text", placeholder: 'Ange din säkerhetskod', id: "CodeBox", width: 200,
                             on: {
                                 "onKeyPress": function (code, e) {
                                     if (code == 13) {
@@ -637,7 +640,7 @@ var CodeTemplate = {
                                 }
                             }
                         },
-                        { view: "button", value: "Press", width: 100, click: "ChangeForgottenPass()" }
+                        { view: "button", value: "Bekräfta", width: 100, click: "ChangeForgottenPass()" }
                     ]
                 },
                 {}
@@ -653,23 +656,23 @@ var NewPassTemplate = {
             template: "<img style='height: 95px;width:70px' src=../img/Taxi-Goteborg-Logo-2015.png>", height: 100
         },
         {
-            template: "Type your new password", height: 35
+            template: "Välj ett nytt lösenord", height: 35
         },
         {
             cols: [
-                { view: "text", type: "password", placeholder: 'New Password', id: "cnPassA", width: 200 },
+                { view: "text", type: "password", placeholder: 'Nytt lösenord', id: "cnPassA", width: 200 },
                 {}
             ]
         },
         {
             cols: [
-                { view: "text", type: "password", placeholder: 'Repeat password', id: "cnPassB", width: 200 },
+                { view: "text", type: "password", placeholder: 'Upprepa nytt lösenord', id: "cnPassB", width: 200 },
                 {}
             ]
         },
         {
             cols: [
-                { view: "button", value: "Press", width: 200, click: "CPFinalStep()" },
+                { view: "button", value: "Bekräfta", width: 200, click: "CPFinalStep()" },
                 {}
             ]
         }
@@ -1214,9 +1217,9 @@ function SaveUser() {
             }
         })
     } else {
-        webix.message({type:"error",text:"Only taxigoteborg.se users allowed!"})
+        webix.message({ type: "error", text: "Only taxigoteborg.se users allowed!" })
     }
-    
+
 }
 
 function SaveFordonControll() {
@@ -1658,40 +1661,6 @@ function PrintToPdf() {
     webix.toPDF($$('medlemDatatable'));
 }
 
-function SendMainForgetPassword() {
-    webix.message("Denna funktion är inte färdigutvecklad ännu. Tack för överseendet!");
-    //Doradi SendMainForgetPassword funkciju
-    return;
-    var frUN = $$("frUN").getValue();
-    $$("btn_SendMainForgetPass").disable();
-    if (frUN.search("@gmail.com") > 0) {
-        //Check if user exists
-        ArnApp.post({
-            url: "sendEmailForgetPass.asp",
-            type: "json",
-            uspjeh: function (data) {
-                if (data[0].UserName != "0" && data[0].UserName != "NN") {
-                    $$("lbl_msg_reg").setValue("Kontrollera din e-post för att återställa lösenordet!");
-                } else {
-                    $$("lbl_msg_reg").setValue("Kunde inte skicka återställningsmailet! Kontrollera din e-postadress och försök igen!");
-                }
-                $$("btn_SendMainForgetPass").enable();
-            },
-            neuspjeh: function () { console.log("Call SendMainForgetPassword failes") },
-            parametri: [{
-                "frUN": frUN
-            }]
-        })
-    } else {
-        $$("lbl_msg_reg").setValue("Kunde inte skicka återställningsmailet! Kontrollera din e-postadress och försök igen!!");
-    }
-}
-
-function SendMainChangePassword() {
-    webix.message("Denna funktion är inte färdigutvecklad ännu. Tack för överseendet!");
-    //Doradi SendMainChangePassword funkciju
-    return;
-}
 
 function UpdatePieChartNarvaro(idNar) {
     jQuery.ajax({
@@ -1816,22 +1785,22 @@ function SendMainChangePassword() {
     var chNewB = $$("chNewB").getValue();
 
     if (chCurrent.length <= 3) {
-        webix.message({ type: "error", text: "Please enter current password!" });
+        webix.message({ type: "error", text: "Ange ditt nuvarande lösenord!" });
         return;
     }
 
     if (chNewA.length <= 3 || chNewB.length <= 3) {
-        webix.message({ type: "error", text: "Please enter new password!" });
+        webix.message({ type: "error", text: "Ditt nya lösenord innehåller för få tecken!" });
         return;
     }
 
     if (chNewA != chNewB) {
-        webix.message({ type: "error", text: "New password not match!" });
+        webix.message({ type: "error", text: "Lösenorden matchar inte!" });
         return;
     }
 
     if (chCurrent == chNewA) {
-        webix.message({ type: "error", text: "Can not use same password!" });
+        webix.message({ type: "error", text: "Lösenord kan inte vara samma!" });
         return;
     }
 
@@ -1858,10 +1827,10 @@ function SendMainChangePassword() {
                 return;
             } else if (data == 2) {
                 //Password not matching
-                webix.message({ type: "error", text: "Please enter correct password!!!" });
+                webix.message({ type: "error", text: "Ange rätt lösenord!" });
                 return;
             }
-            webix.message("Password sucessfully changed!");
+            webix.message("Lösenordet har ändrats!");
             $$("changePassWindow").hide();
             //Config button was pressed in order to change password. Show Krav view to the user
             ShowConfig("KonfigureraKrav");
@@ -1887,7 +1856,7 @@ function SendMainForgetPassword() {
             //If success update webix. Data is Krav ID from database that was updated or created
             success: function (data) {
                 if (data[0].user == "1") {
-                    webix.message({ type: "error", text: "User does not exist!" })
+                    webix.message({ type: "error", text: "Användaren saknas!" })
                     $$("btn_SendMainForgetPass").enable();
                     return;
                 } else {
@@ -1900,7 +1869,7 @@ function SendMainForgetPassword() {
             }
         })
     } else {
-        $$("lbl_msg_reg").setValue("Kunde inte skicka återställningsmailet! Kontrollera din e-postadress och försök igen!!");
+        webix.message({ type: "error", text: "Kontrollera din e-postadress och försök igen!" });
         $$("btn_SendMainForgetPass").enable();
     }
 }
@@ -1921,7 +1890,7 @@ function ChangeForgottenPass() {
                 if (data) {
                     $$("ViewScreen").showBatch("newpass");
                 } else {
-                    webix.message({ type: "error", text: "Incorrect code!!!" });
+                    webix.message({ type: "error", text: "Fel kod!" });
                     location.reload();
                 }
             }
@@ -1934,12 +1903,12 @@ function CPFinalStep() {
     cnPassB = $$("cnPassB").getValue();
 
     if (cnPassA.length <= 3 || cnPassB.length <= 3) {
-        webix.message({ type: "error", text: "Password needs to have at least 4 characters!" })
+        webix.message({ type: "error", text: "Ditt nya lösenord innehåller för få tecken!" })
         return;
     }
 
     if (cnPassA != cnPassB) {
-        webix.message({ type: "error", text: "Passwords do not match!" })
+        webix.message({ type: "error", text: "Lösenorden matchar inte!" })
         return;
     }
 
@@ -1953,8 +1922,31 @@ function CPFinalStep() {
             idCall: cnPassA
         }),
         success: function (data) {
-            webix.message("Password changed!!!");
+            webix.message("Lösenord ändrat!");
             $$("ViewScreen").showBatch("login");
+        }
+    })
+
+}
+
+function UpdateKravDirect(value,id) {
+    if(value==2){value=0}
+    jQuery.ajax({
+        url: 'api/config/updatekravdirect/',
+        type: 'PUT',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            id: id,
+            Krav:"",
+            Status:value,
+            Efterkontroll:"",
+            ExkluderadeBilar: "",
+            Check:true,
+            User: window.activeUser
+        }),
+        success: function (data) {
+            webix.message("Status Uppdaterad!");
         }
     })
 
