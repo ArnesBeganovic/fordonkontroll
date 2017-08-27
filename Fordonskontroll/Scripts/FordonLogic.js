@@ -18,7 +18,7 @@ var DashboardTemplate = {
                             view: "chart",
                             id: "KravPerYearBarChartLatest",
                             type: "stackedBar",
-                            height:400,
+                            height: 400,
                             barWidth: 60,
                             padding: { bottom: 100 },
                             xAxis: {
@@ -63,6 +63,24 @@ var DashboardTemplate = {
                             ],
                             data: []
                         },
+                        {
+                            view: "datatable",
+                            id: "efterkontrollTabOneDatatable",
+                            height:300,
+                            columns: [
+                                { id: "taxinrAA", header: "Taxi Nr", width: 200 },
+                                { id: "antalejuppfylldakrav", width: 200 , header: "Antal ej uppfyllda krav" },
+                                { id: "aa", header: "", fillspace: true}
+                            ],
+                            data: [],
+                            on: {
+                                "onItemDblClick": function (e, r) {
+                                    //$$("ViewScreen").showBatch("search");
+                                    $$("SearchBox").setValue($$("efterkontrollTabOneDatatable").data.pull[e.row].taxinrAA);
+                                    GetFordonData();
+                                }
+                            }
+                        },
                         { template: "", height: 100 }
                     ]
                 }
@@ -102,7 +120,7 @@ var DashboardTemplate = {
                             view: "chart",
                             id: "KravPerYearBarChart",
                             type: "bar",
-                            height:400,
+                            height: 400,
                             barWidth: 20,
                             radius: 2,
                             gradient: "rising",
@@ -149,7 +167,7 @@ var DashboardTemplate = {
                         },
                         {
                             cols: [
-                                { template: "<div style='width:100%;text-align:center'>Efterkontroll</div>", height: 40 },
+                                { template: "<div style='width:100%;text-align:center'>Efterkontroll (antal bilar)</div>", height: 40 },
                                 {
                                     view: "richselect",
                                     id: "ControlSelectorEftNar",
@@ -166,15 +184,15 @@ var DashboardTemplate = {
                                         }
                                     }
                                 },
-                                { template: "<div style='width:100%;text-align:center'>Närvaro</div>", height: 40 }
+                                { template: "<div style='width:100%;text-align:center'>Närvaro (antal bilar)</div>", height: 40 }
                             ]
                         },
                         {
                             cols: [
                                 {
                                     view: "chart",
-                                    type: "pie3D",
-                                    height:300,
+                                    type: "pie",
+                                    height: 300,
                                     container: "chartDiv",
                                     value: "#andel#",
                                     color: "#color#",
@@ -186,7 +204,7 @@ var DashboardTemplate = {
                                 },
                                 {
                                     view: "chart",
-                                    type: "pie3D",
+                                    type: "pie",
                                     container: "chartDiv",
                                     value: "#andel#",
                                     color: "#color#",
@@ -354,7 +372,7 @@ var SearchTemplate = {
 var KonfKrav = {
     rows: [
         {
-            height:40,
+            height: 40,
             cols: [
                 {},
                 {
@@ -408,7 +426,7 @@ var KonfKrav = {
                 "onItemDblClick": function (id) {
                     if (id.column != "status") {
                         ShowKravWindow(id.row);
-                    }                    
+                    }
                 },
                 "onAfterEditStop": function (state, editor) {
                     UpdateKravDirect(state.value, $$("KravTableListConfig").data.pull[editor.row].id)
@@ -808,10 +826,15 @@ function GetDashboard() {
     $$("TidKontPicker").setValue(1);
     $$("TidKontPicker").refresh();
     CalculateForFlygandeKontroll();
-    
+
 }
 
 function GetFirstDashboardTab() {
+    KravTodayFirstTab();
+    EfterkontrollTabOneDatatable();
+}
+
+function KravTodayFirstTab() {
     //Get barchart data latest status
     jQuery.ajax({
         url: 'api/dashboard/KravToday/',
@@ -829,6 +852,26 @@ function GetFirstDashboardTab() {
         }
     })
 }
+function EfterkontrollTabOneDatatable() {
+    //Get barchart data latest status
+    jQuery.ajax({
+        url: 'api/dashboard/efterkontrolltabone/',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({
+            User: window.activeUser
+        }),
+        //If success update webix. Data is Krav ID from database that was updated or created
+        success: function (data) {
+            $$("efterkontrollTabOneDatatable").clearAll();
+            $$("efterkontrollTabOneDatatable").parse(data);
+            $$("efterkontrollTabOneDatatable").refresh();
+        }
+    })
+}
+
+
 
 function GetSecondDashboardTab(id) {
     $$("KravPerYearBarChart").clearAll();
@@ -844,7 +887,7 @@ function GetSecondDashboardTab(id) {
     //Get Piechart data for Narvaro
     UpdatePieChartNarvaro(0, id);
     //Get RichSelect data
-    UpdateRichSelectWithControlls(id);    
+    UpdateRichSelectWithControlls(id);
 }
 function UpdateRichSelectWithControlls(id) {
     //Get Controll List for Medlemmar tab
@@ -886,7 +929,7 @@ function UpdateBarChartPlanneradeKontrol(id) {
         data: JSON.stringify({
             User: window.activeUser,
             idCall: "",
-            izvor:id
+            izvor: id
         }),
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
@@ -925,7 +968,7 @@ function UpdatePieChartNarvaro(idNar, izvor) {
         }
     })
 }
-function UpdatePieChartEfterkontroll(idEft,izvor) {
+function UpdatePieChartEfterkontroll(idEft, izvor) {
     jQuery.ajax({
         url: 'api/dashboard/Efterkontroll/',
         type: 'POST',
@@ -940,7 +983,7 @@ function UpdatePieChartEfterkontroll(idEft,izvor) {
         success: function (data) {
             var ekData = [
                 { andel: data[0].ingen, efterKontrolTyp: "Ingen", color: "#86EF36" },
-                { andel: data[0].senare, efterKontrolTyp: "Senare", color: "#ee9e36" },
+                { andel: data[0].senare, efterKontrolTyp: "Inom kort", color: "#ee9e36" },
                 { andel: data[0].snarast, efterKontrolTyp: "Snarast", color: "#ee3639" }
             ];
             $$("efterkontroll").clearAll();
@@ -960,7 +1003,7 @@ function GetThirdDashboardTab(id) {
         data: JSON.stringify({
             User: window.activeUser,
             idCall: "3",
-            izvor:""
+            izvor: ""
         }),
         //If success update webix. Data is Krav ID from database that was updated or created
         success: function (data) {
@@ -1811,7 +1854,7 @@ function PrintToPdf() {
 
 function DelPlanConFun(id) {
     var isThere = false;
-    if (!confirm("Vill du verkligen radera kontroll?")) {
+    if (!confirm("Är du säker på att du vill radera?")) {
         return;
     }
 
@@ -1832,7 +1875,7 @@ function DelPlanConFun(id) {
             }),
             //If success update webix. Data is Krav ID from database that was updated or created
             success: function (data) {
-                webix.message("Kontroll raderat!!!");
+                webix.message("Kontroll raderad!");
                 GetFC();
             }
         })
@@ -2026,8 +2069,8 @@ function CPFinalStep() {
 
 }
 
-function UpdateKravDirect(value,id) {
-    if(value==2){value=0}
+function UpdateKravDirect(value, id) {
+    if (value == 2) { value = 0 }
     jQuery.ajax({
         url: 'api/config/updatekravdirect/',
         type: 'PUT',
@@ -2035,15 +2078,15 @@ function UpdateKravDirect(value,id) {
         dataType: 'json',
         data: JSON.stringify({
             id: id,
-            Krav:"",
-            Status:value,
-            Efterkontroll:"",
+            Krav: "",
+            Status: value,
+            Efterkontroll: "",
             ExkluderadeBilar: "",
-            Check:true,
+            Check: true,
             User: window.activeUser
         }),
         success: function (data) {
-            webix.message("Status Uppdaterad!");
+            webix.message("Uppdaterad!");
         }
     })
 

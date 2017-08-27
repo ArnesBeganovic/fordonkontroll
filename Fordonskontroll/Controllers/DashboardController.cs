@@ -46,6 +46,37 @@ namespace Fordonskontroll.Controllers
             return ktList;
         }
 
+        [Route("efterkontrolltabone")]
+        [System.Web.Http.HttpPost]
+        public List<EftKontTabOneTable> Efterkontrolltabone([FromBody] UserControllEftNar uc)
+        {
+            List<EftKontTabOneTable> ktList = new List<EftKontTabOneTable>();
+            //Connect and retrieve data
+            if (Login.CheckLogging(uc.user))
+            {
+                string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(CS))
+                {
+                    SqlCommand cmd = new SqlCommand("Dashboard_EfterkontrollTable", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    con.Open();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        EftKontTabOneTable kt = new EftKontTabOneTable();
+                        kt.taxinrAA = rdr["taxinr"].ToString();
+                        kt.antalejuppfylldakrav = rdr["antalejuppfylldakrav"].ToString();
+                        ktList.Add(kt);
+                    }
+                }
+            }
+
+            return ktList;
+        }
+
+
+        
+
         //Tab 2 - bar chart
         [Route("KravPerYearBarChart")]
         [System.Web.Http.HttpPost]
@@ -288,6 +319,11 @@ namespace Fordonskontroll.Controllers
             public string user { get; set; }
             public string idCall { get; set; }
             public string izvor { get; set; }
+        }
+        public class EftKontTabOneTable
+        {
+            public string taxinrAA { get; set; }
+            public string antalejuppfylldakrav { get; set; }
         }
     }
 }
