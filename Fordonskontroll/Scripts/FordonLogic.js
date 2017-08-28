@@ -1192,8 +1192,15 @@ function GetControl(taxiNr, ControlId) {
                     taxiNr: ""
                 })
             }
+            var filteredData = [];
+
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].status != 999) {
+                    filteredData.push(data[i]);
+                }
+            }
             $$("KravData").clearAll();
-            $$("KravData").parse(data);
+            $$("KravData").parse(filteredData);
             $$("SaveControll").enable();
             PopulateVehicleData(data[0]); //Populate table with returned data
             CallPopulateConstollsData(data[0].regNr, data[0].taxiNr, data[0].medlem);
@@ -1308,10 +1315,10 @@ function SaveControll() {
                     //nije snimio
                     webix.message({ type: "error", message: "Kontrolldata sparades inte!" })
                 } else {
-                    //jeste snimio. TBD obavjesti korisnika
+                    //jeste snimio.
                     webix.message("Kontrolldata sparad!")
                 }
-                CallGetControl(data); //Recalculate all TBD
+                CallGetControl(data); 
                 $$("savetextwin").hide();
 
             }
