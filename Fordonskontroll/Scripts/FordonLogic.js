@@ -68,13 +68,14 @@ var DashboardTemplate = {
                             id: "efterkontrollTabOneDatatable",
                             height:300,
                             columns: [
-                                { id: "taxinrAA", header: "Taxi Nr", width: 200 },
-                                { id: "antalejuppfylldakrav", width: 200 , header: "Antal ej uppfyllda krav" },
+                                { id: "taxinrAA", header: "Taxinr", width: 100 },
+                                { id: "antalejuppfylldakrav", width: 300 , header: "Antal ej uppfyllda krav (åtgärdas snarast)" },
+								{ id: "antalejuppfylldakravinomkort", width: 400 , header: "Antal övriga ej uppfyllda krav (åtgärdas inom kort)" },
                                 { id: "aa", header: "", fillspace: true}
                             ],
                             data: [],
                             on: {
-                                "onItemDblClick": function (e, r) {
+                                "onItemClick": function (e, r) {
                                     //$$("ViewScreen").showBatch("search");
                                     $$("SearchBox").setValue($$("efterkontrollTabOneDatatable").data.pull[e.row].taxinrAA);
                                     GetFordonData();
@@ -1183,7 +1184,7 @@ function GetControl(taxiNr, ControlId) {
             if (data.length == 0) {
                 data.push({
                     arsmodell: "",
-                    fabrikat: "TaxiNr Saknas",
+                    fabrikat: "Taxinr saknas",
                     id: 1,
                     krav: "",
                     medlem: 0,
@@ -1210,7 +1211,7 @@ function GetControl(taxiNr, ControlId) {
                 }
             })
 
-            if (data[0].fabrikat == "TaxiNr Saknas") {
+            if (data[0].fabrikat == "Taxinr saknas") {
                 $$("SaveControll").disable();
             }
             $$("loadtextwin").hide();

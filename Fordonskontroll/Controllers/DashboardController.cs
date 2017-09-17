@@ -66,6 +66,7 @@ namespace Fordonskontroll.Controllers
                         EftKontTabOneTable kt = new EftKontTabOneTable();
                         kt.taxinrAA = rdr["taxinr"].ToString();
                         kt.antalejuppfylldakrav = rdr["antalejuppfylldakrav"].ToString();
+                        kt.antalejuppfylldakravinomkort = rdr["antalejuppfylldakravinomkort"].ToString();
                         ktList.Add(kt);
                     }
                 }
@@ -75,7 +76,7 @@ namespace Fordonskontroll.Controllers
         }
 
 
-        
+
 
         //Tab 2 - bar chart
         [Route("KravPerYearBarChart")]
@@ -264,7 +265,7 @@ namespace Fordonskontroll.Controllers
                 SqlDataReader rdr = cmd.ExecuteReader();
                 con.Close();
             }
-        } 
+        }
 
         public class DashMedlemmar
         {
@@ -324,6 +325,7 @@ namespace Fordonskontroll.Controllers
         {
             public string taxinrAA { get; set; }
             public string antalejuppfylldakrav { get; set; }
+            public string antalejuppfylldakravinomkort { get; set; }
         }
     }
 }

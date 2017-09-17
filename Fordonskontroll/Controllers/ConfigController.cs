@@ -108,7 +108,9 @@ namespace Source.Controllers
         [System.Web.Http.HttpPut]
         public long UKD([FromBody] KravRow kravB)
         {
-
+            /*
+             * Updates krav with PUT route 
+             */
             KravRow kravT = ProtectDatabaseKrav(kravB);
 
             //If everything is OK proceed
@@ -361,8 +363,9 @@ namespace Source.Controllers
         public int DelUsr([FromBody] UserDel uDel)
         {
 
-            //uDel je objekat koji nosi user email i sifru. Provjeri u proceduri jel dobro
-            //i izbrisi ako jeste
+            /*
+             * Deletes user based on user id 
+             */
             string userEmail = "empty";
             int UserCount = 0;
             //Connect and retrieve data
@@ -542,6 +545,11 @@ namespace Source.Controllers
         [System.Web.Http.HttpPost]
         public int DelKon([FromBody] UserRowLogId urlID)
         {
+
+            /*
+             * Deletes kontrolldatum based on id
+             */
+
             if (Login.CheckLogging(urlID.User))
             {
                 string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
@@ -561,6 +569,10 @@ namespace Source.Controllers
         [System.Web.Http.HttpPost]
         public int ChPass([FromBody] PassChanger pc)
         {
+            /*
+             * Changes password
+             */
+
             List<PassChanger> pcList = new List<PassChanger>();
             if (Login.CheckLogging(pc.User))
             {
@@ -650,6 +662,10 @@ namespace Source.Controllers
         [System.Web.Http.HttpPost]
         public List<PassChanger> PassForget([FromBody] UserRowLogId urlid)
         {
+            /*
+             * Send new password when user forgets it 
+             */
+
             List<PassChanger> pcList = new List<PassChanger>();
             string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
             using (SqlConnection con = new SqlConnection(CS))
@@ -696,6 +712,11 @@ namespace Source.Controllers
         [System.Web.Http.HttpPost]
         public bool CheckCode([FromBody] UserRowLogId urlid)
         {
+
+            /*
+             * Check if code is OK when user change password
+             */
+
             List<PassChanger> pcList = new List<PassChanger>();
             string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
             using (SqlConnection con = new SqlConnection(CS))
@@ -730,6 +751,10 @@ namespace Source.Controllers
         [System.Web.Http.HttpPost]
         public bool SavePassForg([FromBody] UserRowLogId pc)
         {
+            /*
+             *  Saves new password when user forgets it
+             */
+
             List<PassChanger> pcList = new List<PassChanger>();
             string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
             using (SqlConnection con = new SqlConnection(CS))
@@ -908,6 +933,10 @@ namespace Source.Controllers
         }
         bool IsDigitsOnly(string str)
         {
+            /*
+             * Check if only numerical in string 
+             */
+
             foreach (char c in str)
             {
                 if (c < '0' || c > '9')
@@ -942,7 +971,9 @@ namespace Source.Controllers
         }
         private long GetMaximumKUserID()
         {
-
+            /*
+             * Returns max user id 
+             */
             long UserIdToReturn = 0;
             string CS = ConfigurationManager.ConnectionStrings["Fordonskontroll"].ConnectionString;
             using (SqlConnection con = new SqlConnection(CS))
